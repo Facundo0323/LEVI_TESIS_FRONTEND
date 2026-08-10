@@ -1,0 +1,580 @@
+/* --- CONTENEDOR PRINCIPAL ALUMNO --- */
+.alumno-main-wrapper {
+    width: 100vw;
+    height: 100vh;
+    background-color: #0f0f0f;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+}
+
+/* --- VISTA A: TARJETA DEL MENÚ --- */
+.alumno-card {
+    background: #222; 
+    padding: 50px 60px;
+    border-radius: 15px;
+    border: 1px solid #444;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+.alumno-titulo {
+    margin-top: 0;
+    margin-bottom: 40px;
+    font-size: 2.2em;
+    color: #fff;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.alumno-botones-centrales { display: flex; flex-direction: column; gap: 25px; width: 100%; }
+.btn-menu-gigante { color: white; padding: 30px 20px; font-size: 1.5em; border-radius: 10px; cursor: pointer; transition: all 0.2s ease-in-out; font-weight: bold; border: none; width: 100%; }
+.color-calibrar { background: #8e44ad; } 
+.color-calibrar:hover { background: #9b59b6; transform: scale(1.03); }
+.color-examen { background: #e67e22; } 
+.color-examen:hover { background: #d35400; transform: scale(1.03); }
+
+.btn-volver-alumno { background: transparent; border: 2px solid #555; color: #bbb; padding: 20px; font-size: 1.2em; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-top: 15px; }
+.btn-volver-alumno:hover { background: #333; color: white; border-color: #777; }
+
+
+/* --- VISTA B: PANTALLA DE CALIBRACIÓN COMPLETA --- */
+.calibracion-pantalla-completa {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #050505;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 100;
+}
+
+/* GRUPO DE CÁMARA Y BOTÓN ABORTAR (Arriba a la derecha) */
+.camara-wrapper-absoluto {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    z-index: 50; /* Menor que el cartel flotante para que quede por debajo si chocan */
+}
+
+.caja-camara-verde {
+    width: 200px;
+    height: 200px;
+    border: 3px solid #27ae60;
+    border-radius: 10px;
+    background-color: #000;
+}
+
+.btn-abortar {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.btn-abortar:hover {
+    background: #e74c3c;
+    transform: scale(1.02);
+}
+
+/* CONTENEDOR CENTRAL */
+.calibracion-contenido-central {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+    width: 100%;
+}
+
+/* LOS 6 CUADRITOS */
+.cuadritos-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 50px;
+}
+
+.cuadrito-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cuadrito-caja { width: 70px; height: 70px; border-radius: 5px; background: transparent; transition: all 0.2s; }
+.cuadrito-azul { border: 2px solid #3498db; }
+.cuadrito-amarillo { border: 2px solid #f1c40f; }
+
+.cuadrito-activo {
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.cuadrito-label { color: white; font-size: 0.75em; font-weight: bold; text-transform: uppercase; }
+
+/* TEXTOS CENTRALES */
+.zona-textos-centrales { text-align: center; }
+
+.calibracion-titulo-principal {
+    color: #3498db;
+    font-size: 3.5em;
+    margin: 0 0 15px 0;
+}
+
+.calibracion-instrucciones { color: #ccc; font-size: 1.2em; line-height: 1.5; margin-bottom: 30px; }
+
+.caja-conteo-dinamico {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 250px;
+}
+
+.instruccion-dinamica { 
+    color: #777; 
+    font-size: 1.8em; 
+    margin-bottom: 110px; /* <--- ESTO CREA EL HUECO EN EL MEDIO */
+    white-space: pre-line; 
+    font-weight: normal; 
+}
+.numero-gigante { color: #555; font-size: 5em; margin: 0; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.05); }
+
+/* BOTONES DE CONFIRMACIÓN IGUALADOS */
+.contenedor-botones-confirmacion {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-confirmacion {
+    flex: 1; /* Esto hace que ambos ocupen exactamente el mismo ancho */
+    max-width: 250px; /* Un tope para que no se estiren al infinito */
+    padding: 15px 0;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-verde { background-color: #27ae60; color: white; }
+.btn-verde:hover { background-color: #2ecc71; transform: scale(1.05); }
+.btn-gris { background-color: #555; color: white; border: 1px solid #777; }
+.btn-gris:hover { background-color: #666; transform: scale(1.05); }
+
+.btn-iniciar-calibracion { background-color: #27ae60; color: white; border: none; padding: 15px 40px; font-size: 1.3em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 15px; }
+.btn-iniciar-calibracion:hover { background-color: #2ecc71; transform: scale(1.05); }
+.btn-volver-chico { background: transparent; border: 1px solid #777; color: #aaa; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+.btn-volver-chico:hover { background: #333; color: white; }
+
+
+/* --- ETIQUETA FLOTANTE MIRA AQUÍ --- */
+@keyframes latido-brillo {
+    0% { box-shadow: 0 0 10px rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.8); }
+    100% { box-shadow: 0 0 40px rgba(255,255,255,1), 0 10px 20px rgba(0,0,0,0.8); }
+}
+
+.texto-mira-aqui {
+    position: absolute;
+    color: #ffffff; 
+    font-size: 2.2em;
+    font-weight: bold;
+    padding: 15px 35px; 
+    border-radius: 12px; 
+    border: 3px solid #fff; 
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3); 
+    
+    /* El ancla: Mantiene el centro del rectángulo exacto en la coordenada */
+    transform: translate(-50%, -50%); 
+    
+    /* Animación forzada en top, left y color para que siempre viaje fluido */
+    transition: top 0.6s ease-in-out, left 0.6s ease-in-out, background-color 0.6s ease-in-out;
+    margin: 0;
+    z-index: 1000; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: latido-brillo 0.6s infinite alternate; 
+    white-space: nowrap;
+}
+
+/* Posiciones calculadas EXCLUSIVAMENTE con top y left para permitir el "vuelo" */
+.posicion-centro { top: 50%; left: 50%; }
+.posicion-arriba-izq { top: 100px; left: 180px; }
+/* Usamos calc() para decirle "Andá al final de la pantalla (100%) menos 330px" (esquivando la cámara) */
+.posicion-arriba-der { top: 100px; left: calc(100% - 330px); } 
+.posicion-abajo-izq { top: calc(100% - 100px); left: 180px; }
+.posicion-abajo-der { top: calc(100% - 100px); left: calc(100% - 180px); }
+
+/* --- (Mantené todo tu CSS anterior hasta la parte de calibración) --- */
+/* Pega esto al final de tu PantallaAlumno.css */
+
+/* --- VISTA C: EXAMEN Y GRILLA --- */
+.examen-pantalla-completa {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+/* Cabecera Negra Superior */
+.examen-header {
+    width: 100%;
+    height: 100px;
+    background: #000;
+    border-bottom: 2px solid #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+}
+
+.examen-header h1 {
+    color: #fff;
+    font-size: 2.2em;
+    margin: 0;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 10px rgba(255,255,255,0.2);
+    text-align: center;
+    padding: 0 20px;
+}
+
+/* Botón de pausa bajo la cámara */
+.btn-pausa-examen {
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.2s;
+    font-size: 0.9em;
+}
+
+.btn-pausa-examen:hover {
+    background: #555;
+    border-color: #777;
+}
+
+/* PANTALLAS DE INFORMACIÓN (Centradas) */
+.info-pantalla-examen {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.info-pantalla-examen h2 {
+    font-size: 3em;
+    margin: 0 0 10px 0;
+    color: #fff;
+}
+
+.info-pantalla-examen p {
+    font-size: 1.2em;
+    color: #bbb;
+    margin: 0;
+}
+
+/* LA GRILLA REAL DE OPCIONES */
+.grilla-examen {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    flex-grow: 1;
+    width: 100vw;
+    position: relative;
+}
+
+.cuadrante-opcion {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5em;
+    font-weight: bold;
+    border: 1px solid #222;
+    transition: 0.2s;
+    opacity: 0.2; /* Opacos por defecto hasta que los mires */
+    text-align: center;
+    padding: 20px;
+}
+
+/* Si la opción está vacía, la desaparecemos y la volvemos intocable */
+.opcion-vacia {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Colores originales de tu HTML */
+.bg-rojo { background: #c0392b; }
+.bg-azul { background: #2980b9; }
+.bg-amarillo { background: #f39c12; }
+.bg-verde { background: #27ae60; }
+
+/* Clases preparadas para cuando conectemos el Eye Tracking */
+.cuadrante-opcion.activo {
+    opacity: 1 !important;
+    transform: scale(0.97);
+    box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+    z-index: 10;
+}
+
+.cuadrante-opcion.registrado {
+    background: #3498db !important;
+    color: #fff !important;
+    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.8) !important;
+    transform: scale(0.92);
+    opacity: 1 !important;
+    border: 5px solid #fff;
+    z-index: 20;
+}
+
+/* El círculo central */
+.zona-neutra {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 2px dashed #aaa;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.2em;
+    color: #aaa;
+    font-weight: bold;
+    pointer-events: none; /* Para que no interfiera con los clics */
+}
+
+/* Panel de pruebas (borrar al finalizar el proyecto) */
+.debug-panel {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.8);
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    gap: 5px;
+    z-index: 2000;
+}
+
+.debug-panel button {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.debug-panel button:hover { background: #555; }
+
+/* Botón de recalibrar en tamaño normal (no estirado) */
+.btn-recalibrar-normal {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 15px 40px; /* Tamaño controlado, sin usar flex: 1 */
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 30px;
+}
+
+.btn-recalibrar-normal:hover {
+    background-color: #2ecc71;
+    transform: scale(1.05);
+}
+
+.banner-cv-estado {
+    position: fixed; top: 0; left: 0; width: 100%;
+    text-align: center; padding: 8px; font-weight: bold;
+    z-index: 9999; font-size: 1em;
+}
+.banner-cv-cargando { background: #c0392b; color: white; }
+.banner-cv-listo    { background: #27ae60; color: white; }
+
+.panel-umbral {
+    background: rgba(40,40,40,0.95);
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    width: 128px;
+    color: white;
+    font-size: 0.85em;
+    box-sizing: border-box;
+}
+.panel-umbral input[type=range] { width: 100%; cursor: pointer; }
+
+.cuadrante-activo  { opacity: 1 !important; transform: scale(0.97); box-shadow: inset 0 0 120px rgba(0,0,0,0.8); }
+.cuadrante-registrado { background: #3498db !important; transform: scale(0.92); opacity: 1 !important; border: 5px solid white; }
+
+/* ========================================================= */
+/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) --- */
+/* ========================================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+    
+    /* --------------------------------------------------- */
+    /* 1. CALIBRACIÓN (Intacta como pediste)               */
+    /* --------------------------------------------------- */
+    .camara-wrapper-absoluto {
+        top: 5px;
+        right: 5px;
+        transform: scale(0.5); 
+        transform-origin: top right;
+    }
+    .calibracion-contenido-central {
+        margin-top: 0px;
+        height: 100vh;
+        justify-content: center; 
+    }
+    .cuadritos-container {
+        margin-bottom: 10px; 
+        gap: 5px;
+    }
+    .cuadrito-caja { width: 45px; height: 45px; }
+    .cuadrito-label { font-size: 0.6em; }
+    .calibracion-titulo-principal { font-size: 2em; margin-bottom: 5px; }
+    .calibracion-instrucciones { font-size: 0.9em; margin-bottom: 10px; max-width: 90%; }
+    .btn-iniciar-calibracion { padding: 8px 30px; font-size: 1.1em; margin-bottom: 5px; }
+    .btn-volver-chico { padding: 5px 15px; font-size: 0.85em; }
+   /* 6. Textos del motor (Números y "FOTO") */
+    .caja-conteo-dinamico {
+        height: 180px; /* Le damos más altura a la caja invisible para que tengan espacio para separarse */
+    }
+    .instruccion-dinamica {
+        font-size: 1.1em; /* Letra un pelín más chica */
+        margin-bottom: 70px; /* Separación base */
+        transform: translateY(-20px); /* ¡LA CLAVE! Lo empujamos físicamente hacia arriba */
+    }
+    .numero-gigante {
+        font-size: 3.5em; 
+        transform: translateY(10px); /* Empujamos el número físicamente hacia abajo */
+    }
+    .texto-mira-aqui { font-size: 1.3em; padding: 8px 18px; border: 2px solid #fff; }
+    .posicion-arriba-izq { top: 40px; left: 100px; }
+    .posicion-arriba-der { top: 40px; left: calc(100% - 150px); }
+    .posicion-abajo-izq { top: calc(100% - 40px); left: 100px; }
+    .posicion-abajo-der { top: calc(100% - 40px); left: calc(100% - 150px); }
+
+    /* --------------------------------------------------- */
+    /* 2. MENÚ PRINCIPAL DEL ALUMNO                        */
+    /* --------------------------------------------------- */
+    .alumno-card {
+        padding: 20px 30px;
+        max-width: 90%; /* Dejamos que se estire a lo ancho */
+    }
+    
+    .alumno-titulo {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+    }
+    
+    /* Ponemos los botones en fila para aprovechar el espacio horizontal */
+    .alumno-botones-centrales {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .btn-menu-gigante {
+        padding: 15px;
+        font-size: 1.1em;
+        flex: 1; /* Todos ocupan el mismo ancho */
+        min-width: 160px;
+    }
+
+    .btn-volver-alumno {
+        padding: 10px;
+        font-size: 1em;
+        margin-top: 0;
+        flex: 1;
+        min-width: 100px;
+    }
+
+    /* --------------------------------------------------- */
+    /* 3. EXAMEN (Grilla y Pantallas de Información)       */
+    /* --------------------------------------------------- */
+    
+    /* Achicamos la barra superior negra */
+    .examen-header {
+        height: 50px;
+    }
+    .examen-header h1 {
+        font-size: 1.2em;
+    }
+
+    /* Achicamos la grilla para que las opciones no tapen la cámara */
+    .cuadrante-opcion {
+        font-size: 1.4em; /* Letra más chica para las opciones */
+        padding: 10px;
+    }
+
+    /* Reducimos el círculo de la zona neutra */
+    .zona-neutra {
+        width: 100px;
+        height: 100px;
+        font-size: 0.8em;
+        border-width: 1px;
+    }
+
+    /* Pantallas informativas (Pausa, Resultados, etc.) */
+    .info-pantalla-examen h2 {
+        font-size: 2em !important; /* Forzamos a que no sean gigantes */
+        margin-bottom: 5px !important;
+    }
+    
+    .info-pantalla-examen p {
+        font-size: 1em !important;
+    }
+    
+    /* Ajuste de botones internos del examen */
+    .btn-recalibrar-normal {
+        margin-top: 15px;
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+    
+    .info-pantalla-examen .btn-volver-chico {
+        margin-top: 15px !important;
+        padding: 10px 20px !important;
+    }
+}

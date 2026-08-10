@@ -1,0 +1,90 @@
+/* src/pages/PantallaHome.css */
+.home-page-container {
+    background-color: #0a0a0a;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.home-welcome {
+    font-size: 4em;
+    color: white;
+    margin-bottom: 50px;
+    font-weight: 300;
+    letter-spacing: 2px;
+}
+
+.home-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 90%;
+    max-width: 450px;
+}
+
+.btn-home-large {
+    padding: 30px !important;
+    font-size: 1.5em !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-home-large:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+    box-shadow: 0 5px 25px rgba(255, 255, 255, 0.15);
+}
+
+.btn-subtitle {
+    font-size: 0.4em;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    opacity: 0.7;
+    margin-bottom: 5px;
+}
+
+.home-footer {
+    position: absolute;
+    bottom: 30px;
+    color: #444;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+}
+
+/* ========================================================= */
+/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) --- */
+/* ========================================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+    
+    /* Achicamos el título y le sacamos margen inferior */
+    .home-welcome {
+        font-size: 2.2em;
+        margin-bottom: 20px;
+    }
+
+    /* ¡EL TRUCO MAGICO! Ponemos los botones en fila en lugar de columna */
+    .home-buttons-group {
+        flex-direction: row; 
+        gap: 15px;
+        max-width: 90%; /* Dejamos que ocupe más ancho si lo necesita */
+    }
+
+    /* Achicamos el relleno de los botones para que no sean tan altos */
+    .btn-home-large {
+        padding: 15px 20px !important;
+        font-size: 1.2em !important;
+        flex: 1; /* Hace que ambos botones midan exactamente lo mismo de ancho */
+    }
+
+    /* Bajamos un poco el footer y lo achicamos para que no moleste */
+    .home-footer {
+        bottom: 10px;
+        font-size: 0.7em;
+    }
+}

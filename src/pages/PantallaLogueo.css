@@ -1,0 +1,117 @@
+/* src/pages/PantallaLogueo.css */
+
+/* El contenedor principal que centra todo */
+.auth-page-container {
+    background-color: #0a0a0a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Sin justify-content: center — eso bloquea el scroll */
+    padding-top: 10vh;
+    padding-bottom: 50px;
+    box-sizing: border-box;
+}
+
+.auth-form-container {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    width: 90%;
+    max-width: 450px;
+    box-sizing: border-box; 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+    /* ELIMINADO EL MARGIN AUTO */
+}
+
+.auth-form-container::-webkit-scrollbar { 
+    width: 8px; 
+}
+
+.auth-form-container::-webkit-scrollbar-thumb { 
+    background: #555; 
+    border-radius: 4px; 
+}
+
+/* Estilos para los títulos secundarios (H2) dentro de los formularios */
+.auth-form-container h2 {
+    margin: 0;
+    color: #fff;
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+/* Estilos de los Inputs originales traducidos */
+.auth-input {
+    font-size: 1.1em;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #222;
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: #3498db; /* Tu color de foco original */
+}
+
+/* El select para borrar usuario */
+.auth-select {
+    font-size: 1.1em;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #222;
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.auth-select:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* --- SISTEMA DEL OJO SVG MINIMALISTA --- */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.btn-ojo {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    box-shadow: none; /* Quitamos la sombra base de botones */
+}
+
+.btn-ojo:hover {
+    color: #fff;
+}
+
+.btn-ojo svg {
+    width: 100%;
+    height: 100%;
+}

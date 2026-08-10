@@ -1,0 +1,86 @@
+/* --- Estilos Globales de Eye Tracker Pro --- */
+body { 
+    margin: 0; 
+    padding: 0; 
+    background: #0a0a0a; 
+    color: white; 
+    font-family: 'Segoe UI', sans-serif; 
+    
+    /* Agregamos esto para que el contenido fluya normal */
+    min-height: 100vh; 
+    overflow-x: hidden; /* Evita que la pantalla se mueva hacia los costados por error */
+}
+
+
+#root {
+    width: 100%;
+    min-height: 100vh;
+    /* Sacamos el display: flex de acá */
+}
+
+/* --- Botones Genéricos y Tipografía --- */
+button {
+    font-size: 1.2em;
+    cursor: pointer;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+.btn-verde { background: #27ae60; }
+.btn-verde:hover { background: #2ecc71; }
+
+.btn-gris { background: #555; }
+.btn-gris:hover { background: #777; }
+
+.btn-amarillo { background: #f39c12; color: black; }
+.btn-amarillo:hover { background: #f1c40f; }
+
+.btn-rojo { 
+    background: #c0392b; 
+    transition: all 0.2s ease-in-out;
+    }
+
+
+.btn-rojo:hover { 
+    background: #e74c3c;
+    transform: scale(1.03);
+    box-shadow: 0 5px 15px rgba(100, 52, 52, 0.4); 
+    }
+
+.btn-azul {
+    background: #2980b9; 
+    transition: all 0.2s ease-in-out;
+    }
+
+.btn-azul:hover {
+    background: #3498db; 
+    transform: scale(1.03);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+    
+
+.btn-full {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+}
+
+p {
+    font-size: 1.1em;
+    color: #ccc;
+    margin: 0 0 10px 0;
+}
+
+hr {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid #444;
+}
