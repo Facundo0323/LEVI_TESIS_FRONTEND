@@ -2,8 +2,8 @@
  * @file PantallaContactos.jsx
  * @brief Vista de contactos, discriminada por rol:
  *
- *   - profesor → muestra los datos del tutor (nombre, apellido, contacto).
- *   - tutor    → muestra la lista de profesores con opción de eliminar.
+ *   - profesor → muestra la lista de tutores registrados usando el diseño original.
+ *   - tutor    → muestra la lista de profesores original con opción de eliminar.
  */
 
 import { useState, useEffect } from 'react';
@@ -67,33 +67,41 @@ function PantallaContactos() {
         }
     };
 
-    // ── Vista: profesor → datos del tutor ──────────────────────────────────
+    // ── Vista: profesor → lista dinámica de tutores con diseño original ─────
     if (rol === 'profesor') {
-        const tutor = tutores[0] || null;
         return (
             <div className="panel-menu-container">
                 <div className="tutor-container">
-                    <h1 className="tutor-titulo-destacado">Datos del Tutor</h1>
+                    <h1 className="tutor-titulo-destacado">Tutores Registrados</h1>
                     {cargando ? (
                         <p style={{ color: '#aaa', textAlign: 'center' }}>Cargando...</p>
-                    ) : tutor ? (
-                        <div className="tutor-card">
-                            <div className="tutor-info-fila">
-                                <span className="tutor-etiqueta">Nombre:</span>
-                                <span className="tutor-valor">{tutor.nombre}</span>
-                            </div>
-                            <div className="tutor-info-fila">
-                                <span className="tutor-etiqueta">Apellido:</span>
-                                <span className="tutor-valor">{tutor.apellido}</span>
-                            </div>
-                            <div className="tutor-info-fila">
-                                <span className="tutor-etiqueta">Contacto:</span>
-                                <span className="tutor-valor">{tutor.contacto}</span>
-                            </div>
+                    ) : tutores.length === 0 ? (
+                        <div className="tutor-card tutor-vacio">
+                            <p>No hay tutores registrados en el sistema.</p>
                         </div>
                     ) : (
-                        <div className="tutor-card tutor-vacio">
-                            <p>No se encontró ningún usuario con rol de Tutor registrado.</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
+                            {tutores.map((tutor, index) => (
+                                <div className="tutor-card" key={tutor.idUsuario || index}>
+                                    <div className="tutor-info-fila">
+                                        <span className="tutor-etiqueta">Nombre:</span>
+                                        <span className="tutor-valor">{tutor.nombre}</span>
+                                    </div>
+                                    <div className="tutor-info-fila">
+                                        <span className="tutor-etiqueta">Apellido:</span>
+                                        <span className="tutor-valor">{tutor.apellido}</span>
+                                    </div>
+                                    <div className="tutor-info-fila">
+                                        <span className="tutor-etiqueta">Vínculo:</span>
+                                        {/* Espacio vacío reservado para el vínculo/parentesco */}
+                                        <span className="tutor-valor"></span>
+                                    </div>
+                                    <div className="tutor-info-fila">
+                                        <span className="tutor-etiqueta">Contacto:</span>
+                                        <span className="tutor-valor">{tutor.contacto}</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -104,7 +112,7 @@ function PantallaContactos() {
         );
     }
 
-    // ── Vista: tutor → lista de profesores ────────────────────────────────
+    // ── Vista: tutor → lista de profesores (Restaurada al original) ───────
     return (
         <div className="panel-menu-container">
             <div className="profesores-sub-header">

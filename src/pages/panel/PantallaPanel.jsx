@@ -41,7 +41,7 @@ function PantallaPanel({ onLogout }) {
 
     const botonCentral = rol === 'tutor'
         ? { texto: 'Ver profesores',   clase: 'color-contactos', ruta: '/panel/contactos' }
-        : { texto: 'Ver datos tutor',  clase: 'color-tutor',     ruta: '/panel/contactos' };
+        : { texto: 'Ver tutores',  clase: 'color-tutor',     ruta: '/panel/contactos' };
 
     return (
         <div className="panel-menu-container">
