@@ -274,11 +274,24 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const [resultado, setResultado] = useState(null);
     // { puntajeObtenido, puntajeParaAprobar, aprobado }
 
+    // ── Modo invitado (pregunta suelta, sin puntaje) ─────────────────────
+    const [esInvitado, setEsInvitado] = useState(false);
+    const esInvitadoRef = useRef(false);
+    const [resultadoInvitado, setResultadoInvitado] = useState(null);
+    // { pregunta, respuesta }
+    const setEsInvitadoSync = (v) => { esInvitadoRef.current = v; setEsInvitado(v); };
+
     const umbralConfianzaRef = useRef(0.80); // mirror para procesarFrame (evita stale closure)
 
     const pollingRef = useRef(null);
     const tokenRef = useRef(sessionStorage.getItem('tokenAlumno') || null);
     const [sesionLista, setSesionLista] = useState(false);
+
+    // ── Panel de logs en pantalla (para debug en celular, sin consola) ────
+    //const [debugLogs, setDebugLogs] = useState([]);
+    //const [debugAbierto, setDebugAbierto] = useState(false);
+    //const debugPanelRef = useRef(null);
+    //const MAX_LOGS = 150;
 
     // Helper: setea estado y su ref mirror en un solo lugar
     const setEstadoExamenSync = (nuevoEstado) => {
@@ -290,11 +303,56 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const setPreguntaActualSync = (p) => {
         preguntaActualRef.current = p;
         setPreguntaActual(p);
+        if (p) {
+            console.log(`🔍 preguntaActual seteada. opciones.length=${p.opciones?.length ?? 0} → `,
+                p.opciones?.map((o, i) => `[${i}]=${o ? `"${o.opcion}"` : 'vacío/undefined'}`));
+        } else {
+            console.log('🔍 preguntaActual seteada a null');
+        }
     };
 
     // ────────────────────────────────────────────────────────────────────
-    // INICIAR SESIÓN ALUMNO — al montar el componente
+    // PANEL DE DEBUG EN PANTALLA
+    // Va primero para capturar TODOS los console.log/warn/error del resto
+    // del componente (carga de OpenCV, ESTADO BACKEND, errores de red, etc.)
+    // sin tener que salir a buscar cada uno. Se restaura al desmontar.
     // ────────────────────────────────────────────────────────────────────
+    //useEffect(() => {
+    //    const original = { log: console.log, warn: console.warn, error: console.error };
+//
+    //    const formatearArg = (a) => {
+    //        if (typeof a === 'string') return a;
+    //        try { return JSON.stringify(a); } catch (_) { return String(a); }
+    //    };
+//
+    //    const agregarLinea = (prefijo, args) => {
+    //        const hora = new Date().toLocaleTimeString('es-AR', { hour12: false });
+    //        const texto = `[${hora}] ${prefijo}${args.map(formatearArg).join(' ')}`;
+    //        setDebugLogs(prev => {
+    //            const nuevo = [...prev, texto];
+    //            return nuevo.length > MAX_LOGS ? nuevo.slice(nuevo.length - MAX_LOGS) : nuevo;
+    //        });
+    //    };
+//
+    //    console.log = (...args) => { original.log(...args); agregarLinea('', args); };
+    //    console.warn = (...args) => { original.warn(...args); agregarLinea('⚠️ ', args); };
+    //    console.error = (...args) => { original.error(...args); agregarLinea('❌ ', args); };
+//
+    //    return () => {
+    //        console.log = original.log;
+    //        console.warn = original.warn;
+    //        console.error = original.error;
+    //    };
+    //}, []);
+
+    // Autoscroll del panel de debug hacia el final cada vez que hay líneas nuevas
+    //useEffect(() => {
+    //    if (debugAbierto && debugPanelRef.current) {
+    //        debugPanelRef.current.scrollTop = debugPanelRef.current.scrollHeight;
+    //    }
+    //}, [debugLogs, debugAbierto]);
+
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -334,6 +392,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             const e = data.estado;
 
             if (e === 'en_progreso' || e === 'invitado') {
+                setEsInvitadoSync(e === 'invitado');
                 if (data.pregunta) {
                     setPreguntaActualSync(data.pregunta);
                     setEstadoExamenSync('en_progreso');
@@ -342,18 +401,31 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 }
             } else if (e === 'finalizado') {
                 setEstadoExamenSync('finalizado');
-                setResultado({
-                    puntajeObtenido: data.puntajeObtenido,
-                    puntajeParaAprobar: data.puntajeParaAprobar,
-                    aprobado: data.aprobado,
-                    puntajeMaximo: data.puntajeMaximo,
-                    tiempoSegundos: data.tiempoSegundos
-                });
+                if (esInvitadoRef.current) {
+                    // Ya se respondió por otra vía (enviarRespuesta) y ese
+                    // camino ya cargó resultadoInvitado con la respuesta real;
+                    // esto es solo un respaldo por si el polling llega primero.
+                    setResultadoInvitado(prev => prev || {
+                        pregunta: preguntaActualRef.current?.textoPregunta || '',
+                        respuesta: 'Respuesta registrada.'
+                    });
+                } else {
+                    setResultado({
+                        puntajeObtenido: data.puntajeObtenido,
+                        puntajeParaAprobar: data.puntajeParaAprobar,
+                        aprobado: data.aprobado,
+                        puntajeMaximo: data.puntajeMaximo,
+                        tiempoSegundos: data.tiempoSegundos
+                    });
+                }
                 detenerPolling();
             } else {
                 // 'esperando', 'pausado' u otro: el alumno simplemente espera
                 setEstadoExamenSync('esperando');
                 setPreguntaActualSync(null);
+                setEsInvitadoSync(false);
+                setResultado(null);
+                setResultadoInvitado(null);
             }
         } catch (e) {
             console.warn('consultarEstado:', e.message);
@@ -374,29 +446,54 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     // ENVIAR RESPUESTA
     // ────────────────────────────────────────────────────────────────────
     const enviarRespuesta = useCallback(async (zonaElegida) => {
-        if (!preguntaActualRef.current || respondientoRef.current) return;
+        console.log(`🔍 enviarRespuesta() llamada con zona="${zonaElegida}"`);
+
+        if (!preguntaActualRef.current || respondientoRef.current) {
+            return;
+        }
+        
         const idxZona = ZONAS.indexOf(zonaElegida);
-        if (idxZona < 0 || !preguntaActualRef.current.opciones[idxZona]) return;
+        
+        // Si no hay opción válida en esa zona, abortamos PERO liberamos los cerrojos
+        if (idxZona < 0 || !preguntaActualRef.current.opciones[idxZona]) {
+            console.warn(`🔍 enviarRespuesta abortada: zona "${zonaElegida}" está vacía.`);
+            respondientoRef.current = false;
+            esperandoSiguienteRef.current = false;
+            setOpcionRegistrada(null);
+            setOpcionResaltada(null);
+            ultimaOpcionValidaRef.current = null;
+            return;
+        }
 
         respondientoRef.current = true;
-        const idOpcion = preguntaActualRef.current.opciones[idxZona].idOpcion;
+        const opcionElegida = preguntaActualRef.current.opciones[idxZona];
+        const idOpcion = opcionElegida.idOpcion;
         const idPregunta = preguntaActualRef.current.idPregunta;
+        
+        const textoPreguntaElegida = preguntaActualRef.current.textoPregunta;
+        const textoOpcionElegida = opcionElegida.opcion;
+        const eraInvitado = esInvitadoRef.current;
 
         try {
             const res = await alumnoResponder(idPregunta, idOpcion);
             if (res.finalizo) {
-                // El backend finalizó automáticamente y devuelve el puntaje
-                setResultado({
-                    puntajeObtenido: res.puntajeObtenido,
-                    puntajeParaAprobar: res.puntajeParaAprobar,
-                    aprobado: res.aprobado,
-                    puntajeMaximo: res.puntajeMaximo,
-                    tiempoSegundos: res.tiempoSegundos
-                });
+                if (eraInvitado) {
+                    setResultadoInvitado({
+                        pregunta: textoPreguntaElegida,
+                        respuesta: textoOpcionElegida
+                    });
+                } else {
+                    setResultado({
+                        puntajeObtenido: res.puntajeObtenido,
+                        puntajeParaAprobar: res.puntajeParaAprobar,
+                        aprobado: res.aprobado,
+                        puntajeMaximo: res.puntajeMaximo,
+                        tiempoSegundos: res.tiempoSegundos
+                    });
+                }
                 setEstadoExamenSync('finalizado');
                 detenerPolling();
             } else {
-                // Avanzamos a la siguiente pregunta
                 await consultarEstado();
             }
         } catch (e) {
@@ -553,7 +650,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     setLogDecision(`[${mejorZona?.toUpperCase()}] ${(mejorScore * 100).toFixed(1)}%`);
 
                     if (mejorZona === 'cerrado') {
-                        // Parpadeo = confirmar lo que estaba mirando
                         if (ultimaOpcionValidaRef.current && ultimaOpcionValidaRef.current !== 'centro') {
                             const zonaElegida = ultimaOpcionValidaRef.current;
                             esperandoSiguienteRef.current = true;
@@ -561,8 +657,16 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                             setTimeout(() => enviarRespuesta(zonaElegida), 1500);
                         }
                     } else if (mejorZona !== 'centro') {
-                        ultimaOpcionValidaRef.current = mejorZona;
-                        setOpcionResaltada(mejorZona);
+                        // --- NUEVO: Validar que el cuadrante tenga texto antes de resaltarlo ---
+                        const idxMejor = ZONAS.indexOf(mejorZona);
+                        if (idxMejor >= 0 && preguntaActualRef.current?.opciones?.[idxMejor]) {
+                            ultimaOpcionValidaRef.current = mejorZona;
+                            setOpcionResaltada(mejorZona);
+                        } else {
+                            // Si mira a un cuadrante vacío, lo ignoramos
+                            setOpcionResaltada(null);
+                            ultimaOpcionValidaRef.current = null;
+                        }
                     } else {
                         setOpcionResaltada(ultimaOpcionValidaRef.current);
                     }
@@ -693,6 +797,23 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const detenerYVolver = () => { cancelarSecuenciaRef.current = true; setVistaAlumno('menu'); };
 
     // ────────────────────────────────────────────────────────────────────
+    // VOLVER desde la pantalla de resultado de invitado
+    // A diferencia del "Volver al menú" del examen oficial, esto NO cierra
+    // la sesión del alumno (no toca tokenAlumno): una pregunta de invitado
+    // no es un examen, así que el alumno debe poder seguir usando su panel
+    // con normalidad después.
+    // ────────────────────────────────────────────────────────────────────
+    const volverDeInvitado = () => {
+        detenerPolling();
+        setResultadoInvitado(null);
+        setResultado(null);
+        setPreguntaActualSync(null);
+        setEsInvitadoSync(false);
+        setEstadoExamenSync('esperando');
+        setVistaAlumno('menu');
+    };
+
+    // ────────────────────────────────────────────────────────────────────
     // CSS helper cuadrante
     // ────────────────────────────────────────────────────────────────────
     const claseCuadrante = (zona, base) => {
@@ -743,7 +864,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                         </button>
                         <button className="btn-menu-gigante color-examen"
                             disabled={!cvListoUI}
-                            onClick={() => setVistaAlumno('examen')}>
+                            onClick={() => { iniciarPolling(); setVistaAlumno('examen'); }}>
                             Iniciar cuestionario
                         </button>
                         <button className="btn-volver-alumno" onClick={onLogout}>
@@ -830,11 +951,13 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     <div className="examen-header">
                         <h1>
                             {estadoExamen === 'en_progreso' && preguntaActual
-                                ? `Pregunta ${preguntaActual.numeroPregunta}/${preguntaActual.totalPreguntas}: ${preguntaActual.textoPregunta}`
+                                ? (esInvitado
+                                    ? `Pregunta de invitado: ${preguntaActual.textoPregunta}`
+                                    : `Pregunta ${preguntaActual.numeroPregunta}/${preguntaActual.totalPreguntas}: ${preguntaActual.textoPregunta}`)
                                 : estadoExamen === 'esperando' || estadoExamen === 'iniciando'
                                     ? 'ESPERANDO CUESTIONARIO...'
                                     : estadoExamen === 'finalizado'
-                                        ? '¡EXAMEN FINALIZADO!'
+                                        ? (resultadoInvitado ? 'PREGUNTA DE INVITADO RESPONDIDA' : '¡EXAMEN FINALIZADO!')
                                         : '...'}
                         </h1>
                     </div>
@@ -905,8 +1028,26 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                         </div>
                     )}
 
-                    {/* ── FINALIZADO / RESULTADOS ── */}
-                    {estadoExamen === 'finalizado' && resultado && (
+                    {/* ── FINALIZADO / RESULTADOS DE INVITADO (sin puntaje) ── */}
+                    {estadoExamen === 'finalizado' && resultadoInvitado && (
+                        <div className="info-pantalla-examen">
+                            <div style={{ fontSize: '1.6em', textAlign: 'center', lineHeight: '1.6' }}>
+                                <p style={{ fontStyle: 'italic', color: '#ccc' }}>"{resultadoInvitado.pregunta}"</p>
+                                <p style={{ marginTop: '20px' }}>
+                                    La respuesta fue: <strong>{resultadoInvitado.respuesta}</strong>
+                                </p>
+                            </div>
+
+                            <button className="btn-recalibrar-normal"
+                                style={{ background: '#555', marginTop: '40px' }}
+                                onClick={volverDeInvitado}>
+                                Volver al panel del alumno
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── FINALIZADO / RESULTADOS DE EXAMEN OFICIAL ── */}
+                    {estadoExamen === 'finalizado' && resultado && !resultadoInvitado && (
                         <div className="info-pantalla-examen">
                             <div style={{ fontSize: '1.8em', textAlign: 'center', lineHeight: '1.6' }}>
                                 <p>Puntaje necesario: <strong>{resultado.puntajeParaAprobar}</strong></p>
@@ -930,7 +1071,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                                 onClick={() => {
                                     setEstadoExamenSync('sin_sesion');
                                     setResultado(null);
-                                    setPreguntaActual(null);
+                                    setResultadoInvitado(null);
+                                    setEsInvitadoSync(false);
+                                    setPreguntaActualSync(null);
                                     sessionStorage.removeItem('tokenAlumno');
                                     tokenRef.current = null;
                                     setVistaAlumno('menu');
