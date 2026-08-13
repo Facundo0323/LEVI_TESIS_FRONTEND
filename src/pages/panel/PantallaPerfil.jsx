@@ -3,7 +3,8 @@
  * @brief Edición de perfil, contraseña y eliminación de cuenta.
  *
  * Compartido por profesor y tutor.
- * El campo "Materia" solo se muestra para rol === 'profesor'.
+ * El campo "Referencia" se muestra siempre, pero su etiqueta cambia:
+ * "Materia" para profesores, "Vínculo" para tutores.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -34,8 +35,8 @@ function PantallaPerfil({ onLogout }) {
     const [cargando, setCargando] = useState(false);
     const [nombreUsuario, setNombreUsuario] = useState('');
 
-    // Datos perfil
-    const [datosPerfil, setDatosPerfil]     = useState({ idUsuario: null, usuario: '', nombre: '', apellido: '', materia: '', contacto: '' });
+    // Datos perfil (Se usa "referencia" unificando materia/vinculo)
+    const [datosPerfil, setDatosPerfil]     = useState({ idUsuario: null, usuario: '', nombre: '', apellido: '', referencia: '', contacto: '' });
     const [datosOriginales, setDatosOriginales] = useState(null);
 
     // Contraseña
@@ -54,7 +55,7 @@ function PantallaPerfil({ onLogout }) {
     const usuarioRef = useRef(null);
     const nombreRef = useRef(null);
     const apellidoRef = useRef(null);
-    const materiaRef = useRef(null);
+    const referenciaRef = useRef(null);
     const contactoRef = useRef(null);
 
     // Referencias: Cambiar Contraseña
@@ -69,7 +70,14 @@ function PantallaPerfil({ onLogout }) {
                 const res  = await fetch('/api/auth/perfil', { headers: authHeaders() });
                 const data = await res.json();
                 if (res.ok) {
-                    const cargado = { idUsuario: data.idUsuario, usuario: data.usuario, nombre: data.nombre, apellido: data.apellido, materia: data.materia || '', contacto: data.contacto || '' };
+                    const cargado = { 
+                        idUsuario: data.idUsuario, 
+                        usuario: data.usuario, 
+                        nombre: data.nombre, 
+                        apellido: data.apellido, 
+                        referencia: data.referencia || '', 
+                        contacto: data.contacto || '' 
+                    };
                     setDatosPerfil(cargado);
                     setDatosOriginales(cargado);
                     setNombreUsuario(`${data.nombre} ${data.apellido}`);
@@ -192,23 +200,21 @@ function PantallaPerfil({ onLogout }) {
                         onKeyDown={(e) => { 
                             if (e.key === 'Enter') { 
                                 e.preventDefault(); 
-                                if (rol === 'profesor') materiaRef.current?.focus(); 
-                                else contactoRef.current?.focus(); 
+                                referenciaRef.current?.focus(); 
                             } 
                         }}
                     />
                 </div>
-                {rol === 'profesor' && (
-                    <div className="perfil-fila">
-                        <label>Materia:</label>
-                        <input 
-                            type="text" className="perfil-input" value={datosPerfil.materia} 
-                            onChange={e => setDatosPerfil({ ...datosPerfil, materia: e.target.value })} 
-                            ref={materiaRef}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); contactoRef.current?.focus(); } }}
-                        />
-                    </div>
-                )}
+                {/* ── El input de Referencia ahora se muestra siempre, cambiando el Label ── */}
+                <div className="perfil-fila">
+                    <label>{rol === 'tutor' ? 'Vínculo:' : 'Materia:'}</label>
+                    <input 
+                        type="text" className="perfil-input" value={datosPerfil.referencia} 
+                        onChange={e => setDatosPerfil({ ...datosPerfil, referencia: e.target.value })} 
+                        ref={referenciaRef}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); contactoRef.current?.focus(); } }}
+                    />
+                </div>
                 <div className="perfil-fila">
                     <label>Contacto:</label>
                     <input 

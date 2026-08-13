@@ -117,6 +117,9 @@ function insertarYEsperarWasm(codigoStr, inicioFetch) {
         const scriptObj = document.createElement("script");
         scriptObj.id = 'script-opencv-levi';
         scriptObj.text = codigoStr;
+        scriptObj.id = 'script-opencv-levi';
+        scriptObj.text = codigoStr;
+        console.log('[OpenCV] INYECTANDO SCRIPT #' + (window._leviInyecciones = (window._leviInyecciones||0)+1));
         document.body.appendChild(scriptObj);
         console.log(`[OpenCV] Script insertado en el DOM en ${(performance.now() - inicioEval).toFixed(0)}ms`);
 

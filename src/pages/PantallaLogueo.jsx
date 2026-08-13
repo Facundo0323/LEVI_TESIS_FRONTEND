@@ -35,9 +35,8 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [regRol, setRegRol] = useState('profesor'); 
     const [regNombre, setRegNombre] = useState('');
     const [regApellido, setRegApellido] = useState('');
-    const [regMateria, setRegMateria] = useState('');
     const [regContacto, setRegContacto] = useState('');
-
+    const [regReferencia, setRegReferencia] = useState('');
 
     // --- REFERENCIAS DE TECLADO ---
     const passwordInputRef = useRef(null);
@@ -47,7 +46,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const regNombreRef = useRef(null);
     const regApellidoRef = useRef(null);
     const regRolRef = useRef(null);
-    const regMateriaRef = useRef(null);
+    const regReferenciaRef = useRef(null);
     const regContactoRef = useRef(null);
     const recClaveRef = useRef(null);
     const recPass1Ref = useRef(null);
@@ -102,13 +101,8 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     // 2. FUNCIÓN DE REGISTRO CON BACKEND
     // ─────────────────────────────────────────────────────────
     const registrarUsuario = async () => {
-    if (!regClave || !regUser || !regPass1 || !regPass2 || !regNombre || !regApellido || !regContacto) {
+    if (!regClave || !regUser || !regPass1 || !regPass2 || !regNombre || !regApellido || !regContacto || !regReferencia) {
         alert("Por favor, completá todos los campos.");
-        return;
-    }
-
-    if (regRol === 'profesor' && !regMateria) {
-        alert("Por favor, ingresá la materia.");
         return;
     }
 
@@ -126,7 +120,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                 nombre: regNombre.trim(),
                 apellido: regApellido.trim(),
                 rol: regRol,
-                materia: regRol === 'profesor' ? regMateria.trim() : '',
+                referencia: regReferencia.trim(),
                 contacto: regContacto.trim(),
                 password: regPass1,
                 confirmar: regPass2,
@@ -204,7 +198,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         setRegRol('profesor');
         setRegNombre('');
         setRegApellido('');
-        setRegMateria('');
+        setRegReferencia('');
         setRegContacto('');
         setVistaActual('login');
     };
@@ -397,11 +391,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') { 
                                 e.preventDefault(); 
-                                if (regRol === 'tutor') {
-                                    regContactoRef.current?.focus();
-                                } else {
-                                    regMateriaRef.current?.focus();
-                                }
+                                    regReferenciaRef.current?.focus();
                             }
                         }}
                         style={{ marginBottom: '15px' }}
@@ -413,17 +403,12 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                     <input 
                         type="text" 
                         className="auth-input" 
-                        placeholder="Materia" 
-                        value={regMateria} 
-                        onChange={(e) => setRegMateria(e.target.value)}
-                        ref={regMateriaRef}
-                        disabled={regRol === 'tutor'}
+                        placeholder={regRol === 'tutor' ? 'Vínculo' : 'Materia'}
+                        value={regReferencia} 
+                        onChange={(e) => setRegReferencia(e.target.value)}
+                        ref={regReferenciaRef}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') { e.preventDefault(); regContactoRef.current?.focus(); }
-                        }}
-                        style={{
-                            opacity: regRol === 'tutor' ? 0.5 : 1,
-                            cursor: regRol === 'tutor' ? 'not-allowed' : 'text'
                         }}
                     />
 

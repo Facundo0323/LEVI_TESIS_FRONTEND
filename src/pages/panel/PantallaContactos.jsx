@@ -93,8 +93,8 @@ function PantallaContactos() {
                                     </div>
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Vínculo:</span>
-                                        {/* Espacio vacío reservado para el vínculo/parentesco */}
-                                        <span className="tutor-valor"></span>
+                                        {/* Aquí accedemos a "tutor.vinculo" devuelto por el backend */}
+                                        <span className="tutor-valor">{tutor.vinculo || '-'}</span>
                                     </div>
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Contacto:</span>
@@ -128,7 +128,8 @@ function PantallaContactos() {
                     profesores.map(profe => (
                         <div className="card-profesor" key={profe.idUsuario}>
                             <div className="profesor-fila-sup">
-                                <span className="profesor-materia">{profe.materia}</span>
+                                {/* Aquí accedemos a "profe.materia" devuelto por el backend */}
+                                <span className="profesor-materia">{profe.materia || 'Profesor'}</span>
                                 <button className="btn-borrar-profe" disabled={cargando} onClick={() => eliminarProfesor(profe)}>
                                     🗑
                                 </button>
