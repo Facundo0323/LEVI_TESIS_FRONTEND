@@ -281,6 +281,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const [esInvitado, setEsInvitado] = useState(false);
     const esInvitadoRef = useRef(false);
     const [resultadoInvitado, setResultadoInvitado] = useState(null);
+    const [cuentaRegresivaInvitado, setCuentaRegresivaInvitado] = useState(10);
     // { pregunta, respuesta }
     const setEsInvitadoSync = (v) => { esInvitadoRef.current = v; setEsInvitado(v); };
 
@@ -800,20 +801,40 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const detenerYVolver = () => { cancelarSecuenciaRef.current = true; setVistaAlumno('menu'); };
 
     // ────────────────────────────────────────────────────────────────────
-    // VOLVER desde la pantalla de resultado de invitado
-    // A diferencia del "Volver al menú" del examen oficial, esto NO cierra
-    // la sesión del alumno (no toca tokenAlumno): una pregunta de invitado
-    // no es un examen, así que el alumno debe poder seguir usando su panel
-    // con normalidad después.
+    // TEMPORIZADOR INVITADO (Volver automáticamente a los 10s)
     // ────────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        let timerId;
+        if (estadoExamen === 'finalizado' && resultadoInvitado) {
+            setCuentaRegresivaInvitado(10);
+            timerId = setInterval(() => {
+                setCuentaRegresivaInvitado((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timerId);
+                        volverDeInvitado(); 
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => {
+            if (timerId) clearInterval(timerId);
+        };
+    }, [estadoExamen, resultadoInvitado]);
+
+    // ────────────────────────────────────────────────────────────────────
+    // VOLVER desde la pantalla de resultado de invitado
+    // ────────────────────────────────────────────────────────────────────
+    
     const volverDeInvitado = () => {
-        detenerPolling();
-        setResultadoInvitado(null);
+        iniciarPolling(); // Garantizamos que el polling y el heartbeat sigan activos
+        setResultadoInvitado(null); // Borramos la respuesta anterior
         setResultado(null);
-        setPreguntaActualSync(null);
-        setEsInvitadoSync(false);
-        setEstadoExamenSync('esperando');
-        setVistaAlumno('menu');
+        setPreguntaActualSync(null); // Limpiamos la pregunta en memoria
+        setEsInvitadoSync(false); // Apagamos el modo invitado
+        setEstadoExamenSync('esperando'); // Lo ponemos en estado de espera
+        setVistaAlumno('examen'); // <-- CAMBIO CLAVE: En lugar de 'menu', lo dejamos en 'examen'
     };
 
     // ────────────────────────────────────────────────────────────────────
@@ -1040,12 +1061,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                                     La respuesta fue: <strong>{resultadoInvitado.respuesta}</strong>
                                 </p>
                             </div>
-
-                            <button className="btn-recalibrar-normal"
-                                style={{ background: '#555', marginTop: '40px' }}
-                                onClick={volverDeInvitado}>
-                                Volver al panel del alumno
-                            </button>
+                            <div style={{ marginTop: '50px', color: '#aaa', fontSize: '1.1em', fontWeight: 'bold' }}>
+                                Volviendo al menú en {cuentaRegresivaInvitado} segundos...
+                            </div>
                         </div>
                     )}
 

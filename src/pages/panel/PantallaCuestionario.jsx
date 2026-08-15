@@ -241,13 +241,23 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
 
                         <div className="input-group" style={{ background: '#2c3e50', borderColor: '#2980b9' }}>
                             <label style={{ color: '#fff', minWidth: '150px' }}>Puntaje a sumar:</label>
-                            <input type="number" value={preg.puntaje} onChange={e => actualizarCampo(i, 'puntaje', e.target.value)} />
+                            <input type="number" value={preg.puntaje} onChange={e => {
+                                const valor = e.target.value;
+                                if (valor === '' || Number(valor) >= 0) {
+                                    actualizarCampo(i, 'puntaje', valor);
+                                }
+                            }}/>
                             <button className="btn-gris" onClick={() => aplicarATodas('puntaje', preg.puntaje)} style={{ margin: 0, padding: '8px 15px' }}>Aplicar a todas</button>
                         </div>
 
                         <div className="input-group" style={{ background: '#312424', borderColor: '#c0392b' }}>
                             <label style={{ color: '#e74c3c', minWidth: '150px' }}>Puntaje a restar:</label>
-                            <input type="number" value={preg.puntajeNegativo} onChange={e => actualizarCampo(i, 'puntajeNegativo', e.target.value)} />
+                            <input type="number" value={preg.puntajeNegativo} onChange={e => {
+                                const valor = e.target.value;
+                                if (valor === '' || Number(valor) >= 0) {
+                                    actualizarCampo(i, 'puntajeNegativo', valor);
+                                }
+                            }}/>
                             <button className="btn-gris" onClick={() => aplicarATodas('puntajeNegativo', preg.puntajeNegativo)} style={{ margin: 0, padding: '8px 15px' }}>Aplicar a todas</button>
                         </div>
 
@@ -293,7 +303,13 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
 
             <div className="caja-aprobacion">
                 <label>Puntaje necesario para aprobar:</label>
-                <input type="number" value={puntosAprobar} onChange={e => setPuntosAprobar(e.target.value)} />
+                <input type="number" value={puntosAprobar} onChange={e => {
+                    const valor = e.target.value;
+                    if (valor === '' || Number(valor) >= 0) {
+                        setPuntosAprobar(valor);
+                    }
+                }} 
+                />
             </div>
 
             <div className="botones-finales">
