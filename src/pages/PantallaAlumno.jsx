@@ -282,6 +282,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const esInvitadoRef = useRef(false);
     const [resultadoInvitado, setResultadoInvitado] = useState(null);
     const [cuentaRegresivaInvitado, setCuentaRegresivaInvitado] = useState(10);
+    const [cuentaRegresivaExamen, setCuentaRegresivaExamen] = useState(20);
     // { pregunta, respuesta }
     const setEsInvitadoSync = (v) => { esInvitadoRef.current = v; setEsInvitado(v); };
 
@@ -679,7 +680,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 }
             }
 
-            if (!calibradoRef.current) {
+            if (!calibradoRef.current || vistaAlumno === 'calibracion') {
                 cv.rectangle(dstRef.current,
                     new cv.Point(MARGEN, MARGEN),
                     new cv.Point(MARGEN + TAM_MOLDE, MARGEN + TAM_MOLDE),
@@ -801,42 +802,57 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const detenerYVolver = () => { cancelarSecuenciaRef.current = true; setVistaAlumno('menu'); };
 
     // ────────────────────────────────────────────────────────────────────
-    // TEMPORIZADOR INVITADO (Volver automáticamente a los 10s)
+    // TEMPORIZADORES (Volver automáticamente a standby tras un resultado)
     // ────────────────────────────────────────────────────────────────────
     useEffect(() => {
         let timerId;
-        if (estadoExamen === 'finalizado' && resultadoInvitado) {
-            setCuentaRegresivaInvitado(10);
-            timerId = setInterval(() => {
-                setCuentaRegresivaInvitado((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timerId);
-                        volverDeInvitado(); 
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
+        if (estadoExamen === 'finalizado') {
+            if (resultadoInvitado) {
+                // Temporizador de 10s para invitados
+                setCuentaRegresivaInvitado(10);
+                timerId = setInterval(() => {
+                    setCuentaRegresivaInvitado((prev) => {
+                        if (prev <= 1) {
+                            clearInterval(timerId);
+                            volverAStandby(); 
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            } else if (resultado) {
+                // Temporizador de 20s para examen oficial
+                setCuentaRegresivaExamen(20);
+                timerId = setInterval(() => {
+                    setCuentaRegresivaExamen((prev) => {
+                        if (prev <= 1) {
+                            clearInterval(timerId);
+                            volverAStandby(); 
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            }
         }
         return () => {
             if (timerId) clearInterval(timerId);
         };
-    }, [estadoExamen, resultadoInvitado]);
+    }, [estadoExamen, resultadoInvitado, resultado]);
 
     // ────────────────────────────────────────────────────────────────────
-    // VOLVER desde la pantalla de resultado de invitado
+    // FUNCIÓN MAESTRA: Limpia todo, vuelve a "esperando" y reactiva la red
     // ────────────────────────────────────────────────────────────────────
-    
-    const volverDeInvitado = () => {
-        iniciarPolling(); // Garantizamos que el polling y el heartbeat sigan activos
-        setResultadoInvitado(null); // Borramos la respuesta anterior
+    const volverAStandby = () => {
+        setResultadoInvitado(null);
         setResultado(null);
-        setPreguntaActualSync(null); // Limpiamos la pregunta en memoria
-        setEsInvitadoSync(false); // Apagamos el modo invitado
-        setEstadoExamenSync('esperando'); // Lo ponemos en estado de espera
-        setVistaAlumno('examen'); // <-- CAMBIO CLAVE: En lugar de 'menu', lo dejamos en 'examen'
+        setPreguntaActualSync(null);
+        setEsInvitadoSync(false);
+        setEstadoExamenSync('esperando');
+        setVistaAlumno('examen');
+        iniciarPolling(); 
     };
-
+    
     // ────────────────────────────────────────────────────────────────────
     // CSS helper cuadrante
     // ────────────────────────────────────────────────────────────────────
@@ -1087,20 +1103,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                                 </p>
                             </div>
 
-                            <button className="btn-recalibrar-normal"
-                                style={{ background: '#555', marginTop: '40px' }}
-                                onClick={() => {
-                                    setEstadoExamenSync('sin_sesion');
-                                    setResultado(null);
-                                    setResultadoInvitado(null);
-                                    setEsInvitadoSync(false);
-                                    setPreguntaActualSync(null);
-                                    sessionStorage.removeItem('tokenAlumno');
-                                    tokenRef.current = null;
-                                    setVistaAlumno('menu');
-                                }}>
-                                Volver al menú
-                            </button>
+                            <div style={{ marginTop: '50px', color: '#aaa', fontSize: '1.1em', fontWeight: 'bold' }}>
+                                Volviendo a la sala de espera en {cuentaRegresivaExamen} segundos...
+                            </div>
                         </div>
                     )}
                 </div>
