@@ -390,7 +390,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     // ────────────────────────────────────────────────────────────────────
     const consultarEstado = useCallback(async () => {
         try {
-            await alumnoHeartbeat();
             const data = await alumnoEstado();
 
             console.log("ESTADO BACKEND:", data);
@@ -447,6 +446,13 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
 
+    // Esta función inicia el intervalo SIN hacer una consulta inmediata, 
+    // espaciando perfectamente el tiempo después de responder.
+    const reanudarPolling = useCallback(() => {
+        detenerPolling();
+        pollingRef.current = setInterval(consultarEstado, 2000);
+    }, [consultarEstado]);
+
     // ────────────────────────────────────────────────────────────────────
     // ENVIAR RESPUESTA
     // ────────────────────────────────────────────────────────────────────
@@ -459,7 +465,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         
         const idxZona = ZONAS.indexOf(zonaElegida);
         
-        // Si no hay opción válida en esa zona, abortamos PERO liberamos los cerrojos
         if (idxZona < 0 || !preguntaActualRef.current.opciones[idxZona]) {
             console.warn(`🔍 enviarRespuesta abortada: zona "${zonaElegida}" está vacía.`);
             respondientoRef.current = false;
@@ -471,16 +476,21 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
 
         respondientoRef.current = true;
+        
+        // 1. FRENAMOS el ciclo automático para que no se pise con la respuesta
+        detenerPolling(); 
+
         const opcionElegida = preguntaActualRef.current.opciones[idxZona];
         const idOpcion = opcionElegida.idOpcion;
         const idPregunta = preguntaActualRef.current.idPregunta;
-        
         const textoPreguntaElegida = preguntaActualRef.current.textoPregunta;
         const textoOpcionElegida = opcionElegida.opcion;
         const eraInvitado = esInvitadoRef.current;
 
         try {
-            const res = await alumnoResponder(idPregunta, idOpcion);
+            // 2. Esta petición actúa como el latido de estos 2 segundos
+            const res = await alumnoResponder(idPregunta, idOpcion); 
+            
             if (res.finalizo) {
                 if (eraInvitado) {
                     setResultadoInvitado({
@@ -497,12 +507,14 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     });
                 }
                 setEstadoExamenSync('finalizado');
-                detenerPolling();
+                // No reanudamos el polling porque ya terminó
             } else {
-                await consultarEstado();
+                // 3. Reactivamos el ciclo para que la próxima consulta sea en 2 seg exactos
+                reanudarPolling(); 
             }
         } catch (e) {
             console.warn('enviarRespuesta:', e.message);
+            reanudarPolling(); // Si falla la red, reactivamos igual para no quedarnos colgados
         } finally {
             respondientoRef.current = false;
             esperandoSiguienteRef.current = false;
