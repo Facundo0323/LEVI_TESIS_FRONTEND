@@ -446,8 +446,10 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
 
-    // Esta función inicia el intervalo SIN hacer una consulta inmediata, 
-    // espaciando perfectamente el tiempo después de responder.
+    // Reinicia el ciclo de 2s SIN consultar de inmediato: el heartbeat que
+    // generó el POST /responder (ver verificarSesionAlumno en el backend)
+    // ya "ocupó" el lugar del tick que pausamos, así que el próximo tick
+    // de /estado debe esperar 2s completos desde AHORA, no disparar ya.
     const reanudarPolling = useCallback(() => {
         detenerPolling();
         pollingRef.current = setInterval(consultarEstado, 2000);
@@ -476,9 +478,12 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
 
         respondientoRef.current = true;
-        
-        // 1. FRENAMOS el ciclo automático para que no se pise con la respuesta
-        detenerPolling(); 
+
+        // Frenamos el ciclo automático de /estado ANTES de mandar la
+        // respuesta: el heartbeat que dispara verificarSesionAlumno() en el
+        // propio /responder va a cubrir este "turno" de heartbeat, así que
+        // no queremos que un tick de /estado se superponga y cuente doble.
+        detenerPolling();
 
         const opcionElegida = preguntaActualRef.current.opciones[idxZona];
         const idOpcion = opcionElegida.idOpcion;
@@ -487,10 +492,14 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         const textoOpcionElegida = opcionElegida.opcion;
         const eraInvitado = esInvitadoRef.current;
 
+        // Colchón visual: el cartel "¡REGISTRADO!" queda un mínimo de 1500ms
+        // en pantalla, pero EN PARALELO con la petición de red, no antes de
+        // mandarla. Así el tiempo total de espera es max(1500ms, red)
+        const colchonVisual = sleep(1500);
+
         try {
-            // 2. Esta petición actúa como el latido de estos 2 segundos
-            const res = await alumnoResponder(idPregunta, idOpcion); 
-            
+            const res = await alumnoResponder(idPregunta, idOpcion);
+
             if (res.finalizo) {
                 if (eraInvitado) {
                     setResultadoInvitado({
@@ -507,15 +516,17 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     });
                 }
                 setEstadoExamenSync('finalizado');
-                // No reanudamos el polling porque ya terminó
+                // No reanudamos el polling porque el examen ya terminó
             } else {
-                // 3. Reactivamos el ciclo para que la próxima consulta sea en 2 seg exactos
-                reanudarPolling(); 
+                // Reactivamos el ciclo para que el próximo tick sea en 2s
+                // exactos desde que terminó esta respuesta (no desde antes)
+                reanudarPolling();
             }
         } catch (e) {
             console.warn('enviarRespuesta:', e.message);
-            reanudarPolling(); // Si falla la red, reactivamos igual para no quedarnos colgados
+            reanudarPolling(); // si falla la red, reactivamos igual para no quedarnos colgados
         } finally {
+            await colchonVisual; // espera lo que falte del colchón, si sobra algo
             respondientoRef.current = false;
             esperandoSiguienteRef.current = false;
             setOpcionRegistrada(null);
@@ -671,7 +682,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                             const zonaElegida = ultimaOpcionValidaRef.current;
                             esperandoSiguienteRef.current = true;
                             setOpcionRegistrada(zonaElegida);
-                            setTimeout(() => enviarRespuesta(zonaElegida), 1500);
+                            enviarRespuesta(zonaElegida);
                         }
                     } else if (mejorZona !== 'centro') {
                         // --- NUEVO: Validar que el cuadrante tenga texto antes de resaltarlo ---
