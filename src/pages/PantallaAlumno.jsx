@@ -283,6 +283,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const [resultadoInvitado, setResultadoInvitado] = useState(null);
     const [cuentaRegresivaInvitado, setCuentaRegresivaInvitado] = useState(10);
     const [cuentaRegresivaExamen, setCuentaRegresivaExamen] = useState(20);
+    const [transicionando, setTransicionando] = useState(false);
     // { pregunta, respuesta }
     const setEsInvitadoSync = (v) => { esInvitadoRef.current = v; setEsInvitado(v); };
 
@@ -455,20 +456,11 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         pollingRef.current = setInterval(consultarEstado, 2000);
     }, [consultarEstado]);
 
-    // ────────────────────────────────────────────────────────────────────
-    // ENVIAR RESPUESTA
-    // ────────────────────────────────────────────────────────────────────
     const enviarRespuesta = useCallback(async (zonaElegida) => {
-        console.log(`🔍 enviarRespuesta() llamada con zona="${zonaElegida}"`);
-
-        if (!preguntaActualRef.current || respondientoRef.current) {
-            return;
-        }
+        if (!preguntaActualRef.current || respondientoRef.current) return;
         
         const idxZona = ZONAS.indexOf(zonaElegida);
-        
         if (idxZona < 0 || !preguntaActualRef.current.opciones[idxZona]) {
-            console.warn(`🔍 enviarRespuesta abortada: zona "${zonaElegida}" está vacía.`);
             respondientoRef.current = false;
             esperandoSiguienteRef.current = false;
             setOpcionRegistrada(null);
@@ -478,12 +470,18 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
 
         respondientoRef.current = true;
-
-        // Frenamos el ciclo automático de /estado ANTES de mandar la
-        // respuesta: el heartbeat que dispara verificarSesionAlumno() en el
-        // propio /responder va a cubrir este "turno" de heartbeat, así que
-        // no queremos que un tick de /estado se superponga y cuente doble.
+        
+        // 1. ¡EL RELOJ SE DETIENE ACÁ! Al apagar el polling, el backend deja de recibir latidos.
         detenerPolling();
+
+        // 2. Mostramos el color de la opción elegida
+        setOpcionRegistrada(zonaElegida);
+        
+        // 3. Pausa visual de 800ms para que el alumno lea "¡REGISTRADO!" (El reloj sigue pausado)
+        await sleep(800);
+        
+        // 4. Limpiamos la pantalla y ponemos el cartel de transición (El reloj sigue pausado)
+        setTransicionando(true);
 
         const opcionElegida = preguntaActualRef.current.opciones[idxZona];
         const idOpcion = opcionElegida.idOpcion;
@@ -492,20 +490,13 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         const textoOpcionElegida = opcionElegida.opcion;
         const eraInvitado = esInvitadoRef.current;
 
-        // Colchón visual: el cartel "¡REGISTRADO!" queda un mínimo de 1500ms
-        // en pantalla, pero EN PARALELO con la petición de red, no antes de
-        // mandarla. Así el tiempo total de espera es max(1500ms, red)
-        const colchonVisual = sleep(1500);
-
         try {
+            // 5. Enviamos la respuesta a la base de datos
             const res = await alumnoResponder(idPregunta, idOpcion);
-
-            if (res.finalizo) {
+            
+            if (res?.finalizo) {
                 if (eraInvitado) {
-                    setResultadoInvitado({
-                        pregunta: textoPreguntaElegida,
-                        respuesta: textoOpcionElegida
-                    });
+                    setResultadoInvitado({ pregunta: textoPreguntaElegida, respuesta: textoOpcionElegida });
                 } else {
                     setResultado({
                         puntajeObtenido: res.puntajeObtenido,
@@ -516,17 +507,24 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     });
                 }
                 setEstadoExamenSync('finalizado');
-                // No reanudamos el polling porque el examen ya terminó
+                setTransicionando(false);
+                // Si finalizó, NO reanudamos el reloj.
             } else {
-                // Reactivamos el ciclo para que el próximo tick sea en 2s
-                // exactos desde que terminó esta respuesta (no desde antes)
-                reanudarPolling();
+                // 6. Buscamos la siguiente pregunta. Esto envía un latido que compensa
+                // los ~1.5 segundos que perdimos en la transición visual.
+                await consultarEstado(); 
+                
+                // 7. Quitamos el cartel de transición y mostramos las nuevas opciones
+                setTransicionando(false);
+                
+                // 8. ¡EL RELOJ VUELVE A CORRER! Reactivamos el ciclo automático de 2 segundos.
+                reanudarPolling(); 
             }
         } catch (e) {
             console.warn('enviarRespuesta:', e.message);
-            reanudarPolling(); // si falla la red, reactivamos igual para no quedarnos colgados
+            setTransicionando(false);
+            reanudarPolling(); 
         } finally {
-            await colchonVisual; // espera lo que falte del colchón, si sobra algo
             respondientoRef.current = false;
             esperandoSiguienteRef.current = false;
             setOpcionRegistrada(null);
@@ -1070,25 +1068,32 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                         </div>
                     )}
 
-                    {/* ── EN PROGRESO — GRILLA ── */}
+                    {/* ── EN PROGRESO — GRILLA O TRANSICIÓN ── */}
                     {estadoExamen === 'en_progreso' && preguntaActual && (
-                        <div className="grilla-examen">
-                            {ZONAS.map((zona, i) => {
-                                const opcion = preguntaActual.opciones[i];
-                                return (
-                                    <div key={zona}
-                                        className={claseCuadrante(zona,
-                                            `cuadrante-opcion bg-${['rojo', 'azul', 'amarillo', 'verde'][i]} ${!opcion ? 'opcion-vacia' : ''}`)}>
-                                        <span>
-                                            {opcionRegistrada === zona
-                                                ? '¡REGISTRADO!'
-                                                : (opcion?.opcion || '')}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                            <div className="zona-neutra">ZONA NEUTRA</div>
-                        </div>
+                        transicionando ? (
+                            <div className="info-pantalla-examen" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                                <h2 style={{ color: '#2ecc71', fontSize: '2.5em', margin: '0' }}>¡Respuesta guardada!</h2>
+                                <p style={{ fontSize: '1.2em', color: '#aaa', marginTop: '15px' }}>Preparando la siguiente pregunta...</p>
+                            </div>
+                        ) : (
+                            <div className="grilla-examen">
+                                {ZONAS.map((zona, i) => {
+                                    const opcion = preguntaActual.opciones[i];
+                                    return (
+                                        <div key={zona}
+                                            className={claseCuadrante(zona,
+                                                `cuadrante-opcion bg-${['rojo', 'azul', 'amarillo', 'verde'][i]} ${!opcion ? 'opcion-vacia' : ''}`)}>
+                                            <span>
+                                                {opcionRegistrada === zona
+                                                    ? '¡REGISTRADO!'
+                                                    : (opcion?.opcion || '')}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                                <div className="zona-neutra">ZONA NEUTRA</div>
+                            </div>
+                        )
                     )}
 
                     {/* ── FINALIZADO / RESULTADOS DE INVITADO (sin puntaje) ── */}
