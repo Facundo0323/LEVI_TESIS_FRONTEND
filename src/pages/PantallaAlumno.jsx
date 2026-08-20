@@ -395,6 +395,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
 
             console.log("ESTADO BACKEND:", data);
             const e = data.estado;
+            setTransicionando(false);
 
             if (e === 'en_progreso' || e === 'invitado') {
                 setEsInvitadoSync(e === 'invitado');
@@ -447,15 +448,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
 
-    // Reinicia el ciclo de 2s SIN consultar de inmediato: el heartbeat que
-    // generó el POST /responder (ver verificarSesionAlumno en el backend)
-    // ya "ocupó" el lugar del tick que pausamos, así que el próximo tick
-    // de /estado debe esperar 2s completos desde AHORA, no disparar ya.
-    const reanudarPolling = useCallback(() => {
-        detenerPolling();
-        pollingRef.current = setInterval(consultarEstado, 2000);
-    }, [consultarEstado]);
-
     const enviarRespuesta = useCallback(async (zonaElegida) => {
         if (!preguntaActualRef.current || respondientoRef.current) return;
         
@@ -470,17 +462,22 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
 
         respondientoRef.current = true;
-        
-        // 1. ¡EL RELOJ SE DETIENE ACÁ! Al apagar el polling, el backend deja de recibir latidos.
-        detenerPolling();
 
-        // 2. Mostramos el color de la opción elegida
+        // El polling de /estado NO se toca acá — corre sin interrupciones.
+        // Ahora el reloj del backend solo avanza dentro de obtenerEstado(),
+        // así que cualquier llamada extra a /estado (aparte del tick normal
+        // del setInterval) suma tiempo real de más. Por eso tampoco
+        // llamamos a consultarEstado() a mano más abajo: la próxima
+        // pregunta llega sola, con el próximo tick natural del polling.
+
+        // Mostramos el color de la opción elegida
         setOpcionRegistrada(zonaElegida);
-        
-        // 3. Pausa visual de 800ms para que el alumno lea "¡REGISTRADO!" (El reloj sigue pausado)
+
+        // Pausa visual de 800ms para que el alumno lea "¡REGISTRADO!"
         await sleep(800);
-        
-        // 4. Limpiamos la pantalla y ponemos el cartel de transición (El reloj sigue pausado)
+
+        // Limpiamos la pantalla y ponemos el cartel de transición mientras
+        // esperamos a que el polling (sin tocar) traiga la próxima pregunta
         setTransicionando(true);
 
         const opcionElegida = preguntaActualRef.current.opciones[idxZona];
@@ -491,9 +488,8 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         const eraInvitado = esInvitadoRef.current;
 
         try {
-            // 5. Enviamos la respuesta a la base de datos
             const res = await alumnoResponder(idPregunta, idOpcion);
-            
+
             if (res?.finalizo) {
                 if (eraInvitado) {
                     setResultadoInvitado({ pregunta: textoPreguntaElegida, respuesta: textoOpcionElegida });
@@ -508,22 +504,17 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 }
                 setEstadoExamenSync('finalizado');
                 setTransicionando(false);
-                // Si finalizó, NO reanudamos el reloj.
+                detenerPolling(); // el examen terminó, no tiene sentido seguir polleando
             } else {
-                // 6. Buscamos la siguiente pregunta. Esto envía un latido que compensa
-                // los ~1.5 segundos que perdimos en la transición visual.
-                await consultarEstado(); 
-                
-                // 7. Quitamos el cartel de transición y mostramos las nuevas opciones
-                setTransicionando(false);
-                
-                // 8. ¡EL RELOJ VUELVE A CORRER! Reactivamos el ciclo automático de 2 segundos.
-                reanudarPolling(); 
+                // No hacemos nada más acá: dejamos el cartel de transición
+                // puesto, y el próximo tick del polling (que nunca se
+                // detuvo) va a traer la pregunta nueva y sacar la pantalla
+                // de transición solo (ver dónde consultarEstado() actualiza
+                // preguntaActual / transicionando).
             }
         } catch (e) {
             console.warn('enviarRespuesta:', e.message);
             setTransicionando(false);
-            reanudarPolling(); 
         } finally {
             respondientoRef.current = false;
             esperandoSiguienteRef.current = false;
