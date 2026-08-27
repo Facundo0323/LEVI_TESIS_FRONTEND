@@ -447,11 +447,37 @@ function PantallaCuestionario() {
     const cambiarEstado = async (id, accion) => {
         setCargando(true);
         try {
-            const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({}) });
-            if (res.ok) await cargarCuestionarios();
-            else { const d = await res.json(); alert(d.mensaje || 'Error.'); }
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            // 1. Armamos el payload base
+            let payload = {};
+
+            // 2. Si la acción es iniciar, inyectamos la fecha actual del dispositivo
+            if (accion === 'iniciar') {
+                payload = {
+                    // Enviamos los milisegundos exactos (Date.now())
+                    timestampMs: Date.now(),
+                    // Y también el formato ISO por si lo querés guardar como texto fácil de leer
+                    fechaISO: new Date().toISOString() 
+                };
+            }
+
+            // 3. Enviamos la petición con el body dinámico
+            const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, { 
+                method: 'PATCH', 
+                headers: authHeaders(), 
+                body: JSON.stringify(payload) 
+            });
+
+            if (res.ok) {
+                await cargarCuestionarios();
+            } else { 
+                const d = await res.json(); 
+                alert(d.mensaje || 'Error.'); 
+            }
+        } catch (_) { 
+            alert('Error de conexión.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
 
     const eliminarCuestionario = async (id, titulo) => {
