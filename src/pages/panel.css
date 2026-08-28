@@ -99,7 +99,7 @@
 
 .cuestionarios-sub-header {
     width: 100%;
-    max-width: 800px;
+    max-width: 1050px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -130,7 +130,7 @@
 
 .lista-cuestionarios {
     width: 100%;
-    max-width: 800px;
+    max-width: 1050px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -190,8 +190,13 @@
 
 .metadata-textos {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 8px 20px;
     align-items: center;
+}
+
+.metadata-textos span {
+    white-space: nowrap;
 }
 
 .metadata-botones-estado {

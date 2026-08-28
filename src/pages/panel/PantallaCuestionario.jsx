@@ -21,6 +21,13 @@ const formatearTiempo = (totalSegundos) => {
     return horas > 0 ? `${horas}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
+const formatearFecha = (fechaISO) => {
+    if (!fechaISO) return '-';
+    const fecha = new Date(fechaISO);
+    if (isNaN(fecha.getTime())) return '-';
+    return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
 // ---------------------------------------------------------------------------
 // Sub-vista: lista de cuestionarios
 // ---------------------------------------------------------------------------
@@ -92,6 +99,9 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                                         <span>Nº preguntas: {cues.cantPreguntas}</span>
                                         <span>Puntaje: "{cues.puntajeObtenido}" ({cues.aprobado ? 'Aprobado' : 'Desaprobado'})</span>
                                         <span style={{ color: colorEstado }}>{estado.replace('_', ' ')}</span>
+                                        {estado !== 'PENDIENTE' && (
+                                            <span>Fecha de inicio: {formatearFecha(cues.fechaInicio)}</span>
+                                        )}
                                     </div>
 
                                     <div className="metadata-botones-estado">
@@ -380,6 +390,12 @@ function RevisionCuestionario({ cuestionario, preguntas, cargando, onVolver }) {
                 <div className="revision-footer">
                     <div className="revision-total-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
                         <div>
+                            <span className="revision-total-texto">Fecha de inicio: </span>
+                            <span className="revision-total-numero" style={{ fontSize: '1.1em' }}>
+                                {formatearFecha(cuestionario.fechaInicio)}
+                            </span>
+                        </div>
+                        <div>
                             <span className="revision-total-texto">Tiempo utilizado: </span>
                             <span className="revision-total-numero" style={{ fontSize: '1.1em' }}>
                                 {formatearTiempo(cuestionario.tiempoSegundos)}
@@ -445,40 +461,42 @@ function PantallaCuestionario() {
     };
 
     const cambiarEstado = async (id, accion) => {
-        setCargando(true);
-        try {
-            // 1. Armamos el payload base
-            let payload = {};
+    setCargando(true);
+    try {
+        console.log('cambiarEstado llamado con accion:', JSON.stringify(accion));
 
-            // 2. Si la acción es iniciar, inyectamos la fecha actual del dispositivo
-            if (accion === 'iniciar') {
-                payload = {
-                    // Enviamos los milisegundos exactos (Date.now())
-                    timestampMs: Date.now(),
-                    // Y también el formato ISO por si lo querés guardar como texto fácil de leer
-                    fechaISO: new Date().toISOString() 
-                };
-            }
-
-            // 3. Enviamos la petición con el body dinámico
-            const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, { 
-                method: 'PATCH', 
-                headers: authHeaders(), 
-                body: JSON.stringify(payload) 
-            });
-
-            if (res.ok) {
-                await cargarCuestionarios();
-            } else { 
-                const d = await res.json(); 
-                alert(d.mensaje || 'Error.'); 
-            }
-        } catch (_) { 
-            alert('Error de conexión.'); 
-        } finally { 
-            setCargando(false); 
+        // 1. Armamos el payload base
+        let payload = {};
+        // 2. Si la acción es iniciar, inyectamos la fecha actual del dispositivo
+        if (accion === 'iniciar') {
+            payload = {
+                timestampMs: Date.now(),
+                fechaISO: new Date().toISOString()
+            };
         }
-    };
+        console.log('payload armado:', payload);
+
+        const body = JSON.stringify(payload);
+        console.log('body a enviar:', body);
+
+        // 3. Enviamos la petición con el body dinámico
+        const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body
+        });
+        if (res.ok) {
+            await cargarCuestionarios();
+        } else {
+            const d = await res.json();
+            alert(d.mensaje || 'Error.');
+        }
+    } catch (_) {
+        alert('Error de conexión.');
+    } finally {
+        setCargando(false);
+    }
+};
 
     const eliminarCuestionario = async (id, titulo) => {
         if (!window.confirm(`¿Eliminar "${titulo}"?`)) return;
