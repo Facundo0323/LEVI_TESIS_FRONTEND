@@ -47,12 +47,7 @@ function PantallaPerfil({ onLogout }) {
     const [showNueva, setShowNueva]         = useState(false);
     const [showConfirmar, setShowConfirmar] = useState(false);
 
-    // Eliminar cuenta
-    const [claveBorrar, setClaveBorrar]     = useState('');
-    const [showClaveBorrar, setShowClaveBorrar] = useState(false);
-
      // Referencias: Datos Generales
-    const usuarioRef = useRef(null);
     const nombreRef = useRef(null);
     const apellidoRef = useRef(null);
     const referenciaRef = useRef(null);
@@ -178,7 +173,6 @@ function PantallaPerfil({ onLogout }) {
                     <input 
                         type="text" className="perfil-input" value={datosPerfil.usuario} 
                         onChange={e => setDatosPerfil({ ...datosPerfil, usuario: e.target.value })} 
-                        ref={usuarioRef}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); nombreRef.current?.focus(); } }}
                     />
                 </div>
@@ -233,7 +227,7 @@ function PantallaPerfil({ onLogout }) {
 
                 <div className="perfil-botones">
                     <button className="btn-perfil-outline btn-perfil-verde" disabled={cargando} onClick={guardarPerfil}>
-                        {cargando ? 'Guardando...' : 'Guardar datos'}
+                        {cargando ? 'Procesando...' : 'Guardar datos'}
                     </button>
                 </div>
 
@@ -284,7 +278,7 @@ function PantallaPerfil({ onLogout }) {
                 {/* ── Eliminar cuenta ── */}
                 <div className="perfil-botones">
                     <button style={{ width: '100%', backgroundColor: '#e74c3c', color: '#fff', padding: '15px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', opacity: cargando ? 0.7 : 1 }} disabled={cargando} onClick={eliminarCuenta}>
-                        {cargando ? 'ELIMINANDO...' : 'Eliminar cuenta'}
+                        {cargando ? 'Procesando...' : 'Eliminar cuenta'}
                     </button>
                 </div>
             </div>

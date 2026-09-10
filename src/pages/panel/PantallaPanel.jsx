@@ -15,7 +15,6 @@ function PantallaPanel({ onLogout }) {
     const navigate = useNavigate();
     const rol = sessionStorage.getItem('rol');
     const [nombreUsuario, setNombreUsuario] = useState(rol === 'tutor' ? 'Tutor' : 'Profesor');
-    const [cargando, setCargando] = useState(false);
 
     useEffect(() => {
         const cargarNombre = async () => {
@@ -47,7 +46,7 @@ function PantallaPanel({ onLogout }) {
         <div className="panel-menu-container">
             <div className="panel-header">
                 <h2>Hola, {nombreUsuario}</h2>
-                <button className="btn-rojo-logout" onClick={handleLogout} disabled={cargando}>
+                <button className="btn-rojo-logout" onClick={handleLogout}>
                     Cerrar sesión
                 </button>
             </div>
@@ -56,7 +55,6 @@ function PantallaPanel({ onLogout }) {
                 <button
                     className="btn-menu-largo color-cuestionarios"
                     onClick={() => navigate('/panel/cuestionarios')}
-                    disabled={cargando}
                 >
                     Ver cuestionarios
                 </button>
@@ -64,7 +62,6 @@ function PantallaPanel({ onLogout }) {
                 <button
                     className={`btn-menu-largo ${botonCentral.clase}`}
                     onClick={() => navigate(botonCentral.ruta)}
-                    disabled={cargando}
                 >
                     {botonCentral.texto}
                 </button>
@@ -72,7 +69,6 @@ function PantallaPanel({ onLogout }) {
                 <button
                     className="btn-menu-largo color-perfil"
                     onClick={() => navigate('/panel/perfil')}
-                    disabled={cargando}
                 >
                     Editar perfil
                 </button>

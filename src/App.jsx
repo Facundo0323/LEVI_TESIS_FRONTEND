@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react'; // <-- Importante agregar useEffect
+import { logout } from './services/api'; // <-- Importamos la función logout
 import PantallaHome from './pages/PantallaHome';
 import PantallaLogueo from './pages/PantallaLogueo';
 import PantallaPanel from './pages/panel/PantallaPanel';
@@ -14,20 +15,8 @@ function App() {
     const location = useLocation(); // <-- Nos permite saber en qué ruta estamos
 
     const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
-                },
-            });
-        } catch (_) {
-            // Si falla la conexión igual cerramos sesión en el frontend
-        } finally {
-            sessionStorage.clear();
-            navigate('/login');
-        }
+        await logout();
+        navigate('/login');
     };
 
     // -----------------------------------------------------------------------
@@ -89,7 +78,7 @@ function App() {
         else navigate('/panel');
     };
 
-    const handleEntrarAlumno = async () => {
+    const handleEntrarAlumno = () => {
         navigate('/alumno');
     };
 
@@ -124,10 +113,6 @@ function App() {
             <Route path="/panel/contactos" element={
                 <PantallaContactos />
             } />
-
-            {/* Rutas antiguas redirigidas para no romper bookmarks */}
-            <Route path="/profesor" element={<Navigate to="/panel" replace />} />
-            <Route path="/tutor" element={<Navigate to="/panel" replace />} />
 
             {/* Invitado y Alumno */}
             <Route path="/invitado" element={

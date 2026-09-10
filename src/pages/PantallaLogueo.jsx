@@ -11,8 +11,6 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [showRecClave, setShowRecClave] = useState(false);
     const [showRecPass1, setShowRecPass1] = useState(false);
     const [showRecPass2, setShowRecPass2] = useState(false);
-    const [showDelClave, setShowDelClave] = useState(false);
-    const [showDelPass, setShowDelPass] = useState(false);
 
     const SVG_ABIERTO = (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -200,13 +198,6 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         setRegApellido('');
         setRegReferencia('');
         setRegContacto('');
-        setVistaActual('login');
-    };
-
-    const cancelarBorrado = () => {
-        setDelClave('');
-        setDelUser('');
-        setDelPass('');
         setVistaActual('login');
     };
 

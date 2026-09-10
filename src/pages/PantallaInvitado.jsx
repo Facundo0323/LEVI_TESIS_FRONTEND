@@ -6,8 +6,6 @@ function PantallaInvitado({ onLogout }) {
     const [opciones, setOpciones] = useState(['', '', '', '']);
     const [sesionLista, setSesionLista] = useState(false);
 
-    const preguntaRef = useRef(null);
-
     const refOp0 = useRef(null);
     const refOp1 = useRef(null);
     const refOp2 = useRef(null);
@@ -122,7 +120,6 @@ function PantallaInvitado({ onLogout }) {
                     placeholder="Escribe la pregunta aquí..."
                     value={pregunta}
                     onChange={(e) => setPregunta(e.target.value)}
-                    ref={preguntaRef}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();

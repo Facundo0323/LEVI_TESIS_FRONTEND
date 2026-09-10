@@ -64,7 +64,7 @@
     border-color: #3498db; /* Tu color de foco original */
 }
 
-/* El select para borrar usuario */
+/* El select para el registro de usuarios */
 .auth-select {
     font-size: 1.1em;
     padding: 12px;
