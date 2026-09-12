@@ -11,6 +11,28 @@ import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
 
+const CONFIG_ESTADOS = {
+    'PENDIENTE' : {
+        color: '#e74c3c', accionTxt: 'INICIAR', accionApi: 'iniciar',
+        disableTrash: false, disableEdit: false, disableRojo: true
+    },
+
+    'EN_PROGRESO' : {
+        color: '#3498db', accionTxt: 'PAUSAR', accionApi: 'pausar',
+        disableTrash: true, disableEdit: true, disableRojo: false
+    },
+
+    'PAUSADO' : {
+        color: '#f1c40f', accionTxt: 'REANUDAR', accionApi: 'reanudar',
+        disableTrash: true, disableEdit: true, disableRojo: false
+    },
+    
+    'FINALIZADO' : { 
+        color: '#27ae60', accionTxt: 'REVISAR', accionApi: '', 
+        disableTrash: false, disableEdit: true, disableRojo: true
+    }       
+};
+
 const formatearTiempo = (totalSegundos) => {
     const s = Math.max(0, Math.round(totalSegundos || 0));
     const horas = Math.floor(s / 3600);
@@ -49,22 +71,21 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                 ) : (
                     cuestionarios.map(cues => {
                         const estado = cues.estado.toUpperCase();
-                        let colorEstado = '#fff';
-                        if (estado === 'PENDIENTE')   colorEstado = '#e74c3c';
-                        if (estado === 'EN_PROGRESO') colorEstado = '#3498db';
-                        if (estado === 'PAUSADO')     colorEstado = '#f1c40f';
-                        if (estado === 'FINALIZADO')  colorEstado = '#27ae60';
 
-                        let txtAccion = '';
-                        let accionApi = '';
-                        if (estado === 'PENDIENTE')   { txtAccion = 'INICIAR';  accionApi = 'iniciar'; }
-                        if (estado === 'EN_PROGRESO') { txtAccion = 'PAUSAR';   accionApi = 'pausar'; }
-                        if (estado === 'PAUSADO')     { txtAccion = 'REANUDAR'; accionApi = 'reanudar'; }
-                        if (estado === 'FINALIZADO')  { txtAccion = 'REVISAR'; }
-
-                        const disableTrash = estado === 'EN_PROGRESO' || estado === 'PAUSADO';
-                        const disableEdit  = estado === 'EN_PROGRESO' || estado === 'PAUSADO' || estado === 'FINALIZADO';
-                        const disableRojo  = estado === 'PENDIENTE'   || estado === 'FINALIZADO';
+                        //Por seguridad se le agrega un fallback ante un estado desconocido
+                        const config = CONFIG_ESTADOS[estado] || {
+                            color: '#fff', accionTxt: '', accionApi: '',
+                            disableTrash: true, disableEdit: true, disableRojo: true
+                        };
+                    
+                        const { 
+                            color: colorEstado, 
+                            accionTxt: txtAccion, 
+                            accionApi, 
+                            disableTrash, 
+                            disableEdit, 
+                            disableRojo 
+                        } = config;
 
                         return (
                             <div className="card-cuestionario" key={cues.idCuestionario}>
@@ -188,8 +209,12 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
     const eliminarOpcion = (iP, iO) => {
         const arr = [...preguntas];
         arr[iP].opciones.splice(iO, 1);
-        if (arr[iP].correcta === iO) arr[iP].correcta = 0;
-        else if (arr[iP].correcta > iO) arr[iP].correcta -= 1;
+        if (arr[iP].correcta === iO) {
+        arr[iP].correcta = Math.max(0, iO - 1);
+    } 
+    else if (arr[iP].correcta > iO) {
+        arr[iP].correcta -= 1;
+    }
         setPreguntas(arr);
     };
 
@@ -291,7 +316,13 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                                             if (iO < preg.opciones.length - 1) {
                                                 document.getElementById(`cues-preg-${i}-opc-${iO + 1}`)?.focus();
                                             } else {
-                                                document.getElementById('cues-btn-add')?.focus();
+                                                const inputSiguientePregunta = document.getElementById(`cues-preg-${i + 1}`);
+
+                                                if (inputSiguientePregunta) {
+                                                    inputSiguientePregunta.focus();
+                                                } else {
+                                                    document.getElementById('cues-btn-add')?.focus();
+                                                }
                                             }
                                         }
                                     }}
@@ -326,7 +357,8 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                 <button 
                     id="cues-btn-add" 
                     className="btn-amarillo" 
-                    onClick={agregarPregunta} 
+                    onClick={agregarPregunta}
+                    disabled={cargando} 
                     style={{ marginTop: '10px', padding: '15px' }}
                 >
                     + AÑADIR PREGUNTA
@@ -463,7 +495,6 @@ function PantallaCuestionario() {
     const cambiarEstado = async (id, accion) => {
     setCargando(true);
     try {
-        console.log('cambiarEstado llamado con accion:', JSON.stringify(accion));
 
         // 1. Armamos el payload base
         let payload = {};
@@ -474,10 +505,8 @@ function PantallaCuestionario() {
                 fechaISO: new Date().toISOString()
             };
         }
-        console.log('payload armado:', payload);
 
         const body = JSON.stringify(payload);
-        console.log('body a enviar:', body);
 
         // 3. Enviamos la petición con el body dinámico
         const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, {

@@ -57,8 +57,15 @@ function PantallaContactos() {
                 alert('Profesor eliminado correctamente.');
                 setProfesores(prev => prev.filter(p => p.idUsuario !== profe.idUsuario));
             } else {
-                const d = await res.json();
-                alert(d.mensaje || 'Error al eliminar.');
+                const textoResp = await res.text();
+                let d = {};
+
+                try{
+                    d = JSON.parse(textoResp);
+                } catch (e){
+                    d = { mensaje: textoResp };
+                }
+                alert(d.mensaje || 'Error al eliminar profesor.');
             }
         } catch (_) { 
             alert('Error de conexión.'); 
@@ -82,7 +89,7 @@ function PantallaContactos() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
                             {tutores.map((tutor, index) => (
-                                <div className="tutor-card" key={tutor.idUsuario || index}>
+                                <div className="tutor-card" key={tutor.idUsuario}>
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Nombre:</span>
                                         <span className="tutor-valor">{tutor.nombre}</span>
@@ -94,7 +101,7 @@ function PantallaContactos() {
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Vínculo:</span>
                                         {/* Aquí accedemos a "tutor.vinculo" devuelto por el backend */}
-                                        <span className="tutor-valor">{tutor.vinculo || '-'}</span>
+                                        <span className="tutor-valor">{tutor.vinculo}</span>
                                     </div>
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Contacto:</span>
