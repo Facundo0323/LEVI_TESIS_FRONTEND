@@ -265,7 +265,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const [logDecision, setLogDecision] = useState('Esperando calibración...');
     const ultimaOpcionValidaRef = useRef(null);
     const esperandoSiguienteRef = useRef(false);
-    const respondientoRef = useRef(false); // evita doble envío simultáneo
+    const respondiendoRef = useRef(false); // evita doble envío simultáneo
 
     // ── Estado del examen (viene del backend) ────────────────────────────
     // 'iniciando' | 'esperando' | 'en_progreso' | 'finalizado' | 'sin_sesion'
@@ -449,11 +449,11 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     };
 
     const enviarRespuesta = useCallback(async (zonaElegida) => {
-        if (!preguntaActualRef.current || respondientoRef.current) return;
+        if (!preguntaActualRef.current || respondiendoRef.current) return;
         
         const idxZona = ZONAS.indexOf(zonaElegida);
         if (idxZona < 0 || !preguntaActualRef.current.opciones[idxZona]) {
-            respondientoRef.current = false;
+            respondiendoRef.current = false;
             esperandoSiguienteRef.current = false;
             setOpcionRegistrada(null);
             setOpcionResaltada(null);
@@ -461,7 +461,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             return;
         }
 
-        respondientoRef.current = true;
+        respondiendoRef.current = true;
 
         // El polling de /estado NO se toca acá — corre sin interrupciones.
         // Ahora el reloj del backend solo avanza dentro de obtenerEstado(),
@@ -516,7 +516,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             console.warn('enviarRespuesta:', e.message);
             setTransicionando(false);
         } finally {
-            respondientoRef.current = false;
+            respondiendoRef.current = false;
             esperandoSiguienteRef.current = false;
             setOpcionRegistrada(null);
             setOpcionResaltada(null);
@@ -527,7 +527,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     // ────────────────────────────────────────────────────────────────────
     // OPENCV — Caché local primero; si no, red con timeout + reintentos
     // ────────────────────────────────────────────────────────────────────
-    useEffect(() => {
+    useEffect(function inicializarMotorGrafico() {
         let activo = true;
 
         cargarOpenCVUnaSolaVez().then(() => {
@@ -544,19 +544,18 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             }
 
             cargarCalibracionDeCache();
-            consultarEstado();
-            pollingRef.current = setInterval(consultarEstado, 2000);
+            iniciarPolling();
         });
 
         return () => {
             activo = false;
         };
-    }, [consultarEstado]);
+    }, [iniciarPolling]);
 
     // ────────────────────────────────────────────────────────────────────
     // HEARTBEAT DE LA CÁMARA (Avisarle al CYD que el stream llega bien)
     // ────────────────────────────────────────────────────────────────────
-    useEffect(() => {
+    useEffect(function cameraHeartbeat() {
         const intervalPing = setInterval(() => {
             if (loopActivoRef.current && imgStreamRef.current) {
                 // Solo verificamos que la imagen tenga dimensiones y un source válido
@@ -575,7 +574,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     // ────────────────────────────────────────────────────────────────────
     // LOOP DE VIDEO
     // ────────────────────────────────────────────────────────────────────
-    useEffect(() => {
+    useEffect(function videoLoop() {
         let frameId;
         const ejecutarLoop = (ts) => {
             procesarFrame(ts);
