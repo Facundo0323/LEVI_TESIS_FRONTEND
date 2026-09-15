@@ -11,12 +11,20 @@ import { useNavigate } from 'react-router-dom';
 import '../panel.css';
 
 function PantallaContactos() {
+
+    // -----------------------------------------------------------------------
+    // SESION Y NAVEGACIÓN
+    // -----------------------------------------------------------------------
     const navigate    = useNavigate();
     const rol         = sessionStorage.getItem('rol');
     const authHeaders = () => ({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
     });
+
+    // -----------------------------------------------------------------------
+    // CARGA DE DATOS DESDE EL BACKEND
+    // -----------------------------------------------------------------------
 
     const [cargando, setCargando]   = useState(true);
     const [tutores, setTutores]     = useState([]);
@@ -42,6 +50,10 @@ function PantallaContactos() {
         };
         cargar();
     }, []);
+
+    // -----------------------------------------------------------------------
+    // ELIMINACIÓN DE PROFESORES (solo para tutores)
+    // -----------------------------------------------------------------------
 
     const eliminarProfesor = async (profe) => {
         if (!window.confirm(`¿Eliminar definitivamente al profesor ${profe.nombre} ${profe.apellido}?`)) return;
@@ -74,7 +86,9 @@ function PantallaContactos() {
         }
     };
 
-    // ── Vista: profesor → lista dinámica de tutores con diseño original ─────
+    // -----------------------------------------------------------------------
+    // RENDERIZADO DE LA VISTA PARA PROFESORES
+    // -----------------------------------------------------------------------
     if (rol === 'profesor') {
         return (
             <div className="panel-menu-container">
@@ -100,7 +114,6 @@ function PantallaContactos() {
                                     </div>
                                     <div className="tutor-info-fila">
                                         <span className="tutor-etiqueta">Vínculo:</span>
-                                        {/* Aquí accedemos a "tutor.vinculo" devuelto por el backend */}
                                         <span className="tutor-valor">{tutor.vinculo}</span>
                                     </div>
                                     <div className="tutor-info-fila">
@@ -112,14 +125,19 @@ function PantallaContactos() {
                         </div>
                     )}
                 </div>
-                <button className="btn-volver-bottom" onClick={() => navigate('/panel')} disabled={cargando}>
-                    Volver
+                <button 
+                    className="btn-volver-bottom" 
+                    onClick={() => navigate('/panel')} 
+                    disabled={cargando}>
+                        Volver
                 </button>
             </div>
         );
     }
 
-    // ── Vista: tutor → lista de profesores (Restaurada al original) ───────
+    // -----------------------------------------------------------------------
+    // RENDERIZADO DE LA VISTA PARA TUTORES
+    // -----------------------------------------------------------------------
     return (
         <div className="panel-menu-container">
             <div className="profesores-sub-header">
@@ -135,10 +153,12 @@ function PantallaContactos() {
                     profesores.map(profe => (
                         <div className="card-profesor" key={profe.idUsuario}>
                             <div className="profesor-fila-sup">
-                                {/* Aquí accedemos a "profe.materia" devuelto por el backend */}
                                 <span className="profesor-materia">{profe.materia || 'Profesor'}</span>
-                                <button className="btn-borrar-profe" disabled={cargando} onClick={() => eliminarProfesor(profe)}>
-                                    🗑
+                                <button 
+                                    className="btn-borrar-profe" 
+                                    disabled={cargando} 
+                                    onClick={() => eliminarProfesor(profe)}>
+                                        🗑
                                 </button>
                             </div>
                             <div className="profesor-fila-inf">
@@ -150,8 +170,11 @@ function PantallaContactos() {
                 )}
             </div>
 
-            <button className="btn-volver-bottom" onClick={() => navigate('/panel')} disabled={cargando}>
-                Volver
+            <button 
+                className="btn-volver-bottom" 
+                onClick={() => navigate('/panel')} 
+                disabled={cargando}>
+                    Volver
             </button>
         </div>
     );

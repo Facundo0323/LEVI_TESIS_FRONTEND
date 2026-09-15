@@ -1,9 +1,20 @@
+/**
+ * @file PantallaLogueo.jsx
+ * @brief Pantalla de logueo de usuarios que no son alumnos
+ *
+ * Permite iniciar sesión, registrarse como nuevo usuario, entrar como invitado o recuperar la contraseña.
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import './PantallaLogueo.css'; 
 
 function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [vistaActual, setVistaActual] = useState('login');
     const BACKEND_URL = ""; 
+
+    // -----------------------------------------------------------------------
+    // VISUALIZACIÓN DE CONTRASEÑAS
+    // -----------------------------------------------------------------------
     const [showLoginPass, setShowLoginPass] = useState(false);
     const [showRegClave, setShowRegClave] = useState(false);
     const [showRegPass, setShowRegPass] = useState(false);
@@ -19,7 +30,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
     );
 
-    // MEMORIA DE LOS INPUTS
+    // -----------------------------------------------------------------------
+    // ESTADOS DE LOS INPUTS
+    // -----------------------------------------------------------------------
     const [regClave, setRegClave] = useState('');
     const [regUser, setRegUser] = useState('');
     const [regPass1, setRegPass1] = useState('');
@@ -36,7 +49,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [regContacto, setRegContacto] = useState('');
     const [regReferencia, setRegReferencia] = useState('');
 
-    // --- REFERENCIAS DE TECLADO ---
+    // -----------------------------------------------------------------------
+    // REFERENCIAS A LOS INPUTS
+    // -----------------------------------------------------------------------
     const passwordInputRef = useRef(null);
     const regUserRef = useRef(null);
     const regPass1Ref = useRef(null);
@@ -50,9 +65,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const recPass1Ref = useRef(null);
     const recPass2Ref = useRef(null);
 
-    // ─────────────────────────────────────────────────────────
-    // 1. FUNCIÓN DE LOGIN CON BACKEND
-    // ─────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------
+    // FUNCION DE LOGUEO
+    // -----------------------------------------------------------------------
     const iniciarSesion = async () => {
         if (!loginUser || !loginPass) {
             alert("Por favor, ingresá tu usuario y contraseña.");
@@ -95,9 +110,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         }
     };
 
-  // ─────────────────────────────────────────────────────────
-    // 2. FUNCIÓN DE REGISTRO CON BACKEND
-    // ─────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------
+    // FUNCION DE REGISTRO DE USUARIO NUEVO
+    // -----------------------------------------------------------------------
     const registrarUsuario = async () => {
     if (!regClave || !regUser || !regPass1 || !regPass2 || !regNombre || !regApellido || !regContacto || !regReferencia) {
         alert("Por favor, completá todos los campos.");
@@ -146,9 +161,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     }
 };
 
-    // ─────────────────────────────────────────────────────────
-    // 3. FUNCIÓN PARA RECUPERAR CONTRASEÑA CON BACKEND
-    // ─────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------
+    // FUNCION DE RECUPERACIÓN DE CONTRASEÑA
+    // -----------------------------------------------------------------------
     const recuperarClave = async () => {
         if (!recUser || !recClave || !recPass1 || !recPass2) {
             alert("Por favor, completá todos los campos.");
@@ -181,9 +196,9 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         }
     };
 
-    // ─────────────────────────────────────────────────────────
-    // 4. FUNCIONES DE LIMPIEZA Y NAVEGACIÓN
-    // ─────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------
+    // FUNCIONES DE LIMPIEZA Y NAVEGACIÓN
+    // -----------------------------------------------------------------------
     const volverAtras = () => {
         onGoBack();
     }
@@ -208,6 +223,10 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         setRecPass2('');
         setVistaActual('login');
     };
+
+    // -----------------------------------------------------------------------
+    // RENDERIZADO DE LA PANTALLA DE LOGIN
+    // -----------------------------------------------------------------------
 
     return (
         <div className="auth-page-container">
@@ -246,34 +265,51 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                                 }
                             }}
                         />
-                        <button className="btn-ojo" onClick={() => setShowLoginPass(!showLoginPass)}>
+                        <button 
+                            className="btn-ojo" 
+                            onClick={() => setShowLoginPass(!showLoginPass)}>
                             {showLoginPass ? SVG_CERRADO : SVG_ABIERTO}
                         </button>
                     </div>
                     
                     {/* BOTÓN DE INICIO DE SESIÓN */}
-                    <button className="btn-verde btn-full" style={{ padding: '15px' }} onClick={iniciarSesion}>
-                        INGRESAR
+                    <button 
+                        className="btn-verde btn-full" 
+                        style={{ padding: '15px' }} 
+                        onClick={iniciarSesion}>
+                            INGRESAR
                     </button>
                     
                     <hr />
 
                     {/* BOTÓN DE REGISTRO */}
-                    <button className="btn-amarillo btn-full" style={{ marginTop: '10px', padding: '15px' }} onClick={() => setVistaActual('registro')}>
+                    <button 
+                        className="btn-amarillo btn-full" 
+                        style={{ marginTop: '10px', padding: '15px' }} 
+                        onClick={() => setVistaActual('registro')}>
                         Registrar usuario nuevo
                     </button>
                     
                     {/* BOTÓN DE INVITADO */}
-                    <button className="btn-azul btn-full" onClick={() => onLoginSuccess('invitado')} style={{ padding: '15px', marginTop: '10px' }}>
+                    <button 
+                        className="btn-azul btn-full" 
+                        onClick={() => onLoginSuccess('invitado')} 
+                        style={{ padding: '15px', marginTop: '10px' }}>
                         Entrar como Invitado
                     </button>
 
                     {/* BOTÓN DE RECUPERACIÓN */}
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                        <button className="btn-gris btn-full" style={{ flexGrow: 1, padding: '15px' }} onClick={() => setVistaActual('recuperar')}>
+                        <button 
+                            className="btn-gris btn-full" 
+                            style={{ flexGrow: 1, padding: '15px' }} 
+                            onClick={() => setVistaActual('recuperar')}>
                             Recuperar Clave
                         </button>
-                        <button className="btn-gris btn-full" style={{ flexGrow: 1, padding: '15px' }} onClick={volverAtras}>
+                        <button 
+                            className="btn-gris btn-full" 
+                            style={{ flexGrow: 1, padding: '15px' }} 
+                            onClick={volverAtras}>
                             Volver
                         </button>
                     </div>
@@ -418,11 +454,17 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                         }}
                     />
                     
-                    <button className="btn-verde btn-full" style={{ padding: '15px', marginTop: '15px' }} onClick={registrarUsuario}>
-                        CREAR CUENTA
+                    <button 
+                        className="btn-verde btn-full" 
+                        style={{ padding: '15px', marginTop: '15px' }} 
+                        onClick={registrarUsuario}>
+                            CREAR CUENTA
                     </button>
-                    <button className="btn-gris btn-full" onClick={cancelarRegistro} style={{ marginTop: '10px', padding: '15px' }}>
-                        Cancelar
+                    <button 
+                        className="btn-gris btn-full" 
+                        onClick={cancelarRegistro} 
+                        style={{ marginTop: '10px', padding: '15px' }}>
+                            Cancelar
                     </button>
                 </div>
             )}
@@ -502,11 +544,17 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                         </button>
                     </div>
                     
-                    <button className="btn-verde btn-full" style={{ padding: '15px', marginTop: '15px' }} onClick={recuperarClave}>
-                        RESTABLECER CONTRASEÑA
+                    <button 
+                        className="btn-verde btn-full" 
+                        style={{ padding: '15px', marginTop: '15px' }} 
+                        onClick={recuperarClave}>
+                            RESTABLECER CONTRASEÑA
                     </button>
-                    <button className="btn-gris btn-full" onClick={cancelarRecuperacion} style={{ marginTop: '10px', padding: '15px' }}>
-                        Cancelar
+                    <button 
+                        className="btn-gris btn-full" 
+                        onClick={cancelarRecuperacion} 
+                        style={{ marginTop: '10px', padding: '15px' }}>
+                            Cancelar
                     </button>
                 </div>
             )}

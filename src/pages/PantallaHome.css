@@ -50,31 +50,27 @@
 }
 
 /* ========================================================= */
-/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) --- */
+/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) -- */
 /* ========================================================= */
 @media (max-height: 500px) and (orientation: landscape) {
     
-    /* Achicamos el título y le sacamos margen inferior */
     .home-welcome {
         font-size: 2.2em;
         margin-bottom: 20px;
     }
 
-    /* ¡EL TRUCO MAGICO! Ponemos los botones en fila en lugar de columna */
     .home-buttons-group {
         flex-direction: row; 
         gap: 15px;
-        max-width: 90%; /* Dejamos que ocupe más ancho si lo necesita */
+        max-width: 90%;
     }
 
-    /* Achicamos el relleno de los botones para que no sean tan altos */
     .btn-home-large {
         padding: 15px 20px !important;
         font-size: 1.2em !important;
-        flex: 1; /* Hace que ambos botones midan exactamente lo mismo de ancho */
+        flex: 1; 
     }
 
-    /* Bajamos un poco el footer y lo achicamos para que no moleste */
     .home-footer {
         bottom: 10px;
         font-size: 0.7em;

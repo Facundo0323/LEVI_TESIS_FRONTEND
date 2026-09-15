@@ -1,3 +1,10 @@
+/**
+ * @file PantallaHome.jsx
+ * @brief Pantalla de bienvenida
+ *
+ * Muestra dos botones: "Entrar como Alumno" y "Entrar como Usuario externo".
+ */
+
 import './PantallaHome.css';
 
 function PantallaHome({ onEntrarAlumno, onEntrarUsuario }) {

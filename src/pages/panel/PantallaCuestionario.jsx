@@ -11,6 +11,10 @@ import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
 
+    // -----------------------------------------------------------------------
+    // CONFIGURACIÓN DE ESTADOS
+    // -----------------------------------------------------------------------
+
 const CONFIG_ESTADOS = {
     'PENDIENTE' : {
         color: '#e74c3c', accionTxt: 'INICIAR', accionApi: 'iniciar',
@@ -33,6 +37,10 @@ const CONFIG_ESTADOS = {
     }       
 };
 
+// -----------------------------------------------------------------------
+// FUNCIONES DE FORMATEO
+// -----------------------------------------------------------------------
+
 const formatearTiempo = (totalSegundos) => {
     const s = Math.max(0, Math.round(totalSegundos || 0));
     const horas = Math.floor(s / 3600);
@@ -50,9 +58,9 @@ const formatearFecha = (fechaISO) => {
     return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-// ---------------------------------------------------------------------------
-// Sub-vista: lista de cuestionarios
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// VISTA LISTA DE CUESTIONARIOS
+// -----------------------------------------------------------------------
 function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, onEliminar, onCambiarEstado, onRevisar, onVolver }) {
     return (
         <div className="panel-menu-container">
@@ -72,7 +80,6 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                     cuestionarios.map(cues => {
                         const estado = cues.estado.toUpperCase();
 
-                        //Por seguridad se le agrega un fallback ante un estado desconocido
                         const config = CONFIG_ESTADOS[estado] || {
                             color: '#fff', accionTxt: '', accionApi: '',
                             disableTrash: true, disableEdit: true, disableRojo: true
@@ -126,7 +133,6 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                                     </div>
 
                                     <div className="metadata-botones-estado">
-                                        {/* Botón verde: acción o REVISAR */}
                                         {rol === 'profesor' ? (
                                             <>
                                                 <button
@@ -174,10 +180,15 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
     );
 }
 
-// ---------------------------------------------------------------------------
-// Sub-vista: editor de cuestionario
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// VISTA EDITOR DE CUESTIONARIO
+// -----------------------------------------------------------------------
 function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprobar, setPuntosAprobar, preguntas, setPreguntas, cargando, onGuardar, onVolver }) {
+    
+    // -----------------------------------------------------------------------
+    // FUNCIONES EXCLUSIVAS DEL EDITOR
+    // -----------------------------------------------------------------------
+    
     const [editandoTitulo, setEditandoTitulo] = useState(false);
 
     const agregarPregunta = () => {
@@ -218,6 +229,10 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
         setPreguntas(arr);
     };
 
+    // -----------------------------------------------------------------------
+    // ELEMENTOS DEL EDITOR
+    // -----------------------------------------------------------------------
+
     return (
         <div className="panel-page-container">
             {/* Título editable */}
@@ -237,12 +252,22 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                             style={{ fontSize: '2.5em', background: '#222', color: '#e74c3c', border: '1px solid #555', borderRadius: '8px', padding: '5px 15px', textAlign: 'center', fontWeight: 'bold' }}
                             autoFocus
                         />
-                        <button className="btn-verde" onClick={() => setEditandoTitulo(false)} style={{ padding: '10px 15px', fontSize: '1.2em' }}>✔</button>
+                        <button 
+                            className="btn-verde" 
+                            onClick={() => setEditandoTitulo(false)} 
+                            style={{ padding: '10px 15px', fontSize: '1.2em' }}>
+                                ✔
+                        </button>
                     </>
                 ) : (
                     <>
                         <h1 className="panel-titulo" style={{ marginBottom: 0 }}>{tituloTest}</h1>
-                        <button className="btn-gris" onClick={() => setEditandoTitulo(true)} style={{ padding: '8px 12px', fontSize: '1.2em', background: '#333' }}>✎</button>
+                        <button 
+                            className="btn-gris" 
+                            onClick={() => setEditandoTitulo(true)} 
+                            style={{ padding: '8px 12px', fontSize: '1.2em', background: '#333' }}>
+                                ✎
+                        </button>
                     </>
                 )}
             </div>
@@ -282,7 +307,12 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                                     actualizarCampo(i, 'puntaje', valor);
                                 }
                             }}/>
-                            <button className="btn-gris" onClick={() => aplicarATodas('puntaje', preg.puntaje)} style={{ margin: 0, padding: '8px 15px' }}>Aplicar a todas</button>
+                            <button 
+                                className="btn-gris" 
+                                onClick={() => aplicarATodas('puntaje', preg.puntaje)} 
+                                style={{ margin: 0, padding: '8px 15px' }}>
+                                    Aplicar a todas
+                            </button>
                         </div>
 
                         <div className="input-group" style={{ background: '#312424', borderColor: '#c0392b' }}>
@@ -293,7 +323,12 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                                     actualizarCampo(i, 'puntajeNegativo', valor);
                                 }
                             }}/>
-                            <button className="btn-gris" onClick={() => aplicarATodas('puntajeNegativo', preg.puntajeNegativo)} style={{ margin: 0, padding: '8px 15px' }}>Aplicar a todas</button>
+                            <button 
+                                className="btn-gris" 
+                                onClick={() => aplicarATodas('puntajeNegativo', preg.puntajeNegativo)} 
+                                style={{ margin: 0, padding: '8px 15px' }}>
+                                    Aplicar a todas
+                            </button>
                         </div>
 
                         <hr style={{ margin: '20px 0', borderColor: '#333' }} />
@@ -301,8 +336,12 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                         {preg.opciones.map((opcionTexto, iO) => (
                             <div className="input-group" key={iO}>
                                 <label>
-                                    <input type="radio" name={`correcta-${i}`} checked={preg.correcta === iO} onChange={() => actualizarCampo(i, 'correcta', iO)} />
-                                    {' '}Correcta
+                                    <input 
+                                        type="radio" 
+                                        name={`correcta-${i}`} 
+                                        checked={preg.correcta === iO} 
+                                        onChange={() => actualizarCampo(i, 'correcta', iO)} />
+                                            {' '}Correcta
                                 </label>
                                 <input 
                                     id={`cues-preg-${i}-opc-${iO}`} 
@@ -328,14 +367,22 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                                     }}
                                 />
                                 {preg.opciones.length > 2 && (
-                                    <button className="btn-rojo" onClick={() => eliminarOpcion(i, iO)} style={{ padding: '8px 12px', margin: 0, flexShrink: 0 }}>X</button>
+                                    <button 
+                                        className="btn-rojo" 
+                                        onClick={() => eliminarOpcion(i, iO)} 
+                                        style={{ padding: '8px 12px', margin: 0, flexShrink: 0 }}>
+                                            X
+                                    </button>
                                 )}
                             </div>
                         ))}
 
                         {preg.opciones.length < 4 && (
-                            <button className="btn-gris" onClick={() => agregarOpcion(i)} style={{ width: '100%', marginTop: '10px', padding: '10px', background: '#333' }}>
-                                + Agregar otra opción
+                            <button 
+                                className="btn-gris" 
+                                onClick={() => agregarOpcion(i)} 
+                                style={{ width: '100%', marginTop: '10px', padding: '10px', background: '#333' }}>
+                                    + Agregar otra opción
                             </button>
                         )}
                     </div>
@@ -363,20 +410,28 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                 >
                     + AÑADIR PREGUNTA
                 </button>
-                <button className="btn-verde" onClick={onGuardar} disabled={cargando} style={{ marginTop: '10px', padding: '15px', opacity: cargando ? 0.7 : 1 }}>
-                    {cargando ? 'GUARDANDO...' : 'GUARDAR CUESTIONARIO'}
+                <button 
+                    className="btn-verde" 
+                    onClick={onGuardar} 
+                    disabled={cargando} 
+                    style={{ marginTop: '10px', padding: '15px', opacity: cargando ? 0.7 : 1 }}>
+                        {cargando ? 'GUARDANDO...' : 'GUARDAR CUESTIONARIO'}
                 </button>
-                <button className="btn-gris" disabled={cargando} onClick={onVolver} style={{ marginTop: '10px', padding: '15px' }}>
-                    VOLVER SIN GUARDAR
+                <button 
+                    className="btn-gris" 
+                    disabled={cargando} 
+                    onClick={onVolver} 
+                    style={{ marginTop: '10px', padding: '15px' }}>
+                        VOLVER SIN GUARDAR
                 </button>
             </div>
         </div>
     );
 }
 
-// ---------------------------------------------------------------------------
-// Sub-vista: revisión de cuestionario finalizado
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// VISTA DE REVISIÓN DE CUESTIONARIO
+// -----------------------------------------------------------------------
 function RevisionCuestionario({ cuestionario, preguntas, cargando, onVolver }) {
     return (
         <div className="panel-menu-container">
@@ -450,10 +505,14 @@ function RevisionCuestionario({ cuestionario, preguntas, cargando, onVolver }) {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Componente principal
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// COMPONENTE PRINCIPAL
+// -----------------------------------------------------------------------
 function PantallaCuestionario() {
+
+    // -----------------------------------------------------------------------
+    // SESION Y NAVEGACIÓN
+    // -----------------------------------------------------------------------
     const navigate = useNavigate();
     const rol = sessionStorage.getItem('rol');
 
@@ -465,7 +524,9 @@ function PantallaCuestionario() {
     const [vista, setVista] = useState('lista'); 
     const [cargando, setCargando] = useState(false);
 
-    // Lista
+    // -----------------------------------------------------------------------
+    // ESTADOS AUXILIARES
+    // -----------------------------------------------------------------------
     const [cuestionarios, setCuestionarios] = useState([]);
 
     // Editor
@@ -478,7 +539,9 @@ function PantallaCuestionario() {
     const [cuestionarioRevision, setCuestionarioRevision] = useState(null);
     const [preguntasRevision, setPreguntasRevision]       = useState([]);
 
-    // Cargar lista al montar
+    // -----------------------------------------------------------------------
+    // FUNCIONES DE LA VISTA "LISTAR"
+    // -----------------------------------------------------------------------
     useEffect(() => { cargarCuestionarios(); }, []);
 
     const cargarCuestionarios = async () => {
@@ -495,10 +558,8 @@ function PantallaCuestionario() {
     const cambiarEstado = async (id, accion) => {
     setCargando(true);
     try {
-
-        // 1. Armamos el payload base
         let payload = {};
-        // 2. Si la acción es iniciar, inyectamos la fecha actual del dispositivo
+
         if (accion === 'iniciar') {
             payload = {
                 timestampMs: Date.now(),
@@ -508,7 +569,6 @@ function PantallaCuestionario() {
 
         const body = JSON.stringify(payload);
 
-        // 3. Enviamos la petición con el body dinámico
         const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, {
             method: 'PATCH',
             headers: authHeaders(),
@@ -537,6 +597,10 @@ function PantallaCuestionario() {
         } catch (_) { alert('Error de conexión.'); }
         finally { setCargando(false); }
     };
+
+    // -----------------------------------------------------------------------
+    // FUNCIONES DE TRANSICIÓN DE VISTAS
+    // -----------------------------------------------------------------------
 
     const abrirRevision = async (cues) => {
         setCargando(true);
@@ -583,6 +647,10 @@ function PantallaCuestionario() {
         finally { setCargando(false); }
     };
 
+    // -----------------------------------------------------------------------
+    // GUARDAR CUESTIONARIO (NUEVO O EDITADO)
+    // -----------------------------------------------------------------------
+
     const guardar = async () => {
         const incompleta = preguntas.some(p =>
             !p.pregunta.trim() || p.opciones.length < 2 || p.opciones.some(o => !o.trim())
@@ -613,7 +681,7 @@ function PantallaCuestionario() {
     };
 
     // -----------------------------------------------------------------------
-    // Render según vista
+    // RENDERIZADO DE VISTAS
     // -----------------------------------------------------------------------
     if (vista === 'lista') {
         return (

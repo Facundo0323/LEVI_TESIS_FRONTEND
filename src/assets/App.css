@@ -1,24 +1,18 @@
-/* --- Estilos Globales de Eye Tracker Pro --- */
 body { 
     margin: 0; 
     padding: 0; 
     background: #0a0a0a; 
     color: white; 
     font-family: 'Segoe UI', sans-serif; 
-    
-    /* Agregamos esto para que el contenido fluya normal */
     min-height: 100vh; 
-    overflow-x: hidden; /* Evita que la pantalla se mueva hacia los costados por error */
+    overflow-x: hidden;
 }
-
 
 #root {
     width: 100%;
     min-height: 100vh;
-    /* Sacamos el display: flex de acá */
 }
 
-/* --- Botones Genéricos y Tipografía --- */
 button {
     font-size: 1.2em;
     cursor: pointer;

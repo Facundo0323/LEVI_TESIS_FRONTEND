@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react'; // <-- Importante agregar useEffect
-import { logout } from './services/api'; // <-- Importamos la función logout
+import { useEffect } from 'react';
+import { logout } from './services/api';
 import PantallaHome from './pages/PantallaHome';
 import PantallaLogueo from './pages/PantallaLogueo';
 import PantallaPanel from './pages/panel/PantallaPanel';
@@ -12,7 +12,7 @@ import PantallaAlumno from './pages/PantallaAlumno';
 
 function App() {
     const navigate = useNavigate();
-    const location = useLocation(); // <-- Nos permite saber en qué ruta estamos
+    const location = useLocation();
 
     const handleLogout = async () => {
         await logout();
@@ -20,29 +20,25 @@ function App() {
     };
 
     // -----------------------------------------------------------------------
-    // NUEVO: MONITOR GLOBAL DE INACTIVIDAD Y SESIÓN
+    // MONITOR GLOBAL DE INACTIVIDAD Y SESIÓN
     // -----------------------------------------------------------------------
-    useEffect(() => {
-        // Solo activamos el vigilante si el usuario está dentro del panel
+    useEffect(function monitorInactividad() {
         if (!location.pathname.startsWith('/panel')) return;
 
         let lastActivity = Date.now();
         const updateActivity = () => { lastActivity = Date.now(); };
 
-        // Escuchar cuando el usuario mueve el mouse, hace clic o toca el teclado
         window.addEventListener('mousemove', updateActivity);
         window.addEventListener('keydown', updateActivity);
         window.addEventListener('click', updateActivity);
 
         const intervalo = setInterval(async () => {
-            // 1. Control de inactividad local (10 minutos)
             if (Date.now() - lastActivity > 600000) {
                 alert("Sesión expirada por inactividad.");
                 handleLogout();
                 return;
             }
 
-            // 2. Control de sesión con la placa ESP32 (Heartbeat)
             try {
                 const res = await fetch('/api/auth/heartbeat', {
                     method: 'POST',
@@ -54,14 +50,12 @@ function App() {
 
                 if (!res.ok) {
                     const data = await res.json();
-                    // Acá atrapa el error si alguien de mayor prioridad te sacó
                     alert(data.mensaje || "Sesión inválida o expirada.");
                     handleLogout();
                 }
             } catch (_) {
-                // Ignoramos errores de red momentáneos
             }
-        }, 5000); // Revisa cada 5 segundos
+        }, 5000);
 
         return () => {
             window.removeEventListener('mousemove', updateActivity);
@@ -72,6 +66,8 @@ function App() {
     }, [location.pathname]); 
 
     // -----------------------------------------------------------------------
+    // FUNCIONES DE NAVEGACIÓN
+    // -----------------------------------------------------------------------
 
     const handleLoginSuccess = (rol) => {
         if (rol === 'invitado') navigate('/invitado');
@@ -81,6 +77,10 @@ function App() {
     const handleEntrarAlumno = () => {
         navigate('/alumno');
     };
+
+    // -----------------------------------------------------------------------
+    // RUTAS
+    // -----------------------------------------------------------------------
 
     return (
         <Routes>

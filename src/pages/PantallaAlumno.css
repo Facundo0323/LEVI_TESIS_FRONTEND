@@ -1,4 +1,4 @@
-/* --- CONTENEDOR PRINCIPAL ALUMNO --- */
+/* src/pages/PantallaAlumno.css */
 .alumno-main-wrapper {
     width: 100vw;
     height: 100vh;
@@ -10,7 +10,9 @@
     font-family: sans-serif;
 }
 
-/* --- VISTA A: TARJETA DEL MENÚ --- */
+/* =========================================================
+   VISTA MENÚ PRINCIPAL
+   ========================================================= */
 .alumno-card {
     background: #222; 
     padding: 50px 60px;
@@ -44,7 +46,9 @@
 .btn-volver-alumno:hover { background: #333; color: white; border-color: #777; }
 
 
-/* --- VISTA B: PANTALLA DE CALIBRACIÓN COMPLETA --- */
+/* =========================================================
+   VISTA CALIBRACIÓN
+   ========================================================= */
 .calibracion-pantalla-completa {
     position: fixed;
     top: 0;
@@ -58,7 +62,6 @@
     z-index: 100;
 }
 
-/* GRUPO DE CÁMARA Y BOTÓN ABORTAR (Arriba a la derecha) */
 .camara-wrapper-absoluto {
     position: absolute;
     top: 30px;
@@ -67,7 +70,7 @@
     flex-direction: column;
     gap: 10px;
     align-items: center;
-    z-index: 50; /* Menor que el cartel flotante para que quede por debajo si chocan */
+    z-index: 50; 
 }
 
 .caja-camara-verde {
@@ -96,7 +99,6 @@
     transform: scale(1.02);
 }
 
-/* CONTENEDOR CENTRAL */
 .calibracion-contenido-central {
     display: flex;
     flex-direction: column;
@@ -105,7 +107,6 @@
     width: 100%;
 }
 
-/* LOS 6 CUADRITOS */
 .cuadritos-container {
     display: flex;
     gap: 10px;
@@ -125,7 +126,6 @@
 
 .cuadrito-label { color: white; font-size: 0.75em; font-weight: bold; text-transform: uppercase; }
 
-/* TEXTOS CENTRALES */
 .zona-textos-centrales { text-align: center; }
 
 .calibracion-titulo-principal {
@@ -147,13 +147,12 @@
 .instruccion-dinamica { 
     color: #777; 
     font-size: 1.8em; 
-    margin-bottom: 110px; /* <--- ESTO CREA EL HUECO EN EL MEDIO */
+    margin-bottom: 110px; 
     white-space: pre-line; 
     font-weight: normal; 
 }
 .numero-gigante { color: #555; font-size: 5em; margin: 0; line-height: 1; text-shadow: 0 0 10px rgba(255,255,255,0.05); }
 
-/* BOTONES DE CONFIRMACIÓN IGUALADOS */
 .contenedor-botones-confirmacion {
     display: flex;
     gap: 20px;
@@ -163,8 +162,8 @@
 }
 
 .btn-confirmacion {
-    flex: 1; /* Esto hace que ambos ocupen exactamente el mismo ancho */
-    max-width: 250px; /* Un tope para que no se estiren al infinito */
+    flex: 1; 
+    max-width: 250px; 
     padding: 15px 0;
     font-size: 1.2em;
     font-weight: bold;
@@ -184,8 +183,6 @@
 .btn-volver-chico { background: transparent; border: 1px solid #777; color: #aaa; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
 .btn-volver-chico:hover { background: #333; color: white; }
 
-
-/* --- ETIQUETA FLOTANTE MIRA AQUÍ --- */
 @keyframes latido-brillo {
     0% { box-shadow: 0 0 10px rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.8); }
     100% { box-shadow: 0 0 40px rgba(255,255,255,1), 0 10px 20px rgba(0,0,0,0.8); }
@@ -200,11 +197,7 @@
     border-radius: 12px; 
     border: 3px solid #fff; 
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3); 
-    
-    /* El ancla: Mantiene el centro del rectángulo exacto en la coordenada */
     transform: translate(-50%, -50%); 
-    
-    /* Animación forzada en top, left y color para que siempre viaje fluido */
     transition: top 0.6s ease-in-out, left 0.6s ease-in-out, background-color 0.6s ease-in-out;
     margin: 0;
     z-index: 1000; 
@@ -213,19 +206,15 @@
     animation: latido-brillo 0.6s infinite alternate; 
     white-space: nowrap;
 }
-
-/* Posiciones calculadas EXCLUSIVAMENTE con top y left para permitir el "vuelo" */
 .posicion-centro { top: 50%; left: 50%; }
 .posicion-arriba-izq { top: 100px; left: 180px; }
-/* Usamos calc() para decirle "Andá al final de la pantalla (100%) menos 330px" (esquivando la cámara) */
 .posicion-arriba-der { top: 100px; left: calc(100% - 330px); } 
 .posicion-abajo-izq { top: calc(100% - 100px); left: 180px; }
 .posicion-abajo-der { top: calc(100% - 100px); left: calc(100% - 180px); }
 
-/* --- (Mantené todo tu CSS anterior hasta la parte de calibración) --- */
-/* Pega esto al final de tu PantallaAlumno.css */
-
-/* --- VISTA C: EXAMEN Y GRILLA --- */
+/* =========================================================
+   VISTA EXAMEN
+   ========================================================= */
 .examen-pantalla-completa {
     position: fixed;
     top: 0;
@@ -238,7 +227,6 @@
     z-index: 100;
 }
 
-/* Cabecera Negra Superior */
 .examen-header {
     width: 100%;
     height: 100px;
@@ -261,7 +249,6 @@
     padding: 0 20px;
 }
 
-/* Botón de pausa bajo la cámara */
 .btn-pausa-examen {
     background: #333;
     color: white;
@@ -280,7 +267,6 @@
     border-color: #777;
 }
 
-/* PANTALLAS DE INFORMACIÓN (Centradas) */
 .info-pantalla-examen {
     flex-grow: 1;
     display: flex;
@@ -302,7 +288,6 @@
     margin: 0;
 }
 
-/* LA GRILLA REAL DE OPCIONES */
 .grilla-examen {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -321,24 +306,21 @@
     font-weight: bold;
     border: 1px solid #222;
     transition: 0.2s;
-    opacity: 0.2; /* Opacos por defecto hasta que los mires */
+    opacity: 0.2;
     text-align: center;
     padding: 20px;
 }
 
-/* Si la opción está vacía, la desaparecemos y la volvemos intocable */
 .opcion-vacia {
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
-/* Colores originales de tu HTML */
 .bg-rojo { background: #c0392b; }
 .bg-azul { background: #2980b9; }
 .bg-amarillo { background: #f39c12; }
 .bg-verde { background: #27ae60; }
 
-/* Clases preparadas para cuando conectemos el Eye Tracking */
 .cuadrante-opcion.activo {
     opacity: 1 !important;
     transform: scale(0.97);
@@ -356,7 +338,6 @@
     z-index: 20;
 }
 
-/* El círculo central */
 .zona-neutra {
     position: absolute;
     top: 50%;
@@ -375,10 +356,9 @@
     font-size: 1.2em;
     color: #aaa;
     font-weight: bold;
-    pointer-events: none; /* Para que no interfiera con los clics */
+    pointer-events: none; 
 }
 
-/* Panel de pruebas (borrar al finalizar el proyecto) */
 .debug-panel {
     position: fixed;
     bottom: 10px;
@@ -403,12 +383,11 @@
 
 .debug-panel button:hover { background: #555; }
 
-/* Botón de recalibrar en tamaño normal (no estirado) */
 .btn-recalibrar-normal {
     background-color: #27ae60;
     color: white;
     border: none;
-    padding: 15px 40px; /* Tamaño controlado, sin usar flex: 1 */
+    padding: 15px 40px;
     font-size: 1.2em;
     font-weight: bold;
     border-radius: 8px;
@@ -447,13 +426,13 @@
 .cuadrante-registrado { background: #3498db !important; transform: scale(0.92); opacity: 1 !important; border: 5px solid white; }
 
 /* ========================================================= */
-/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) --- */
+/* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) -- */
 /* ========================================================= */
 @media (max-height: 500px) and (orientation: landscape) {
     
-    /* --------------------------------------------------- */
-    /* 1. CALIBRACIÓN (Intacta como pediste)               */
-    /* --------------------------------------------------- */
+   /* =========================================================
+   CALIBRACIÓN
+   ========================================================= */
     .camara-wrapper-absoluto {
         top: 5px;
         right: 5px;
@@ -475,18 +454,17 @@
     .calibracion-instrucciones { font-size: 0.9em; margin-bottom: 10px; max-width: 90%; }
     .btn-iniciar-calibracion { padding: 8px 30px; font-size: 1.1em; margin-bottom: 5px; }
     .btn-volver-chico { padding: 5px 15px; font-size: 0.85em; }
-   /* 6. Textos del motor (Números y "FOTO") */
     .caja-conteo-dinamico {
-        height: 180px; /* Le damos más altura a la caja invisible para que tengan espacio para separarse */
+        height: 180px; 
     }
     .instruccion-dinamica {
-        font-size: 1.1em; /* Letra un pelín más chica */
-        margin-bottom: 70px; /* Separación base */
-        transform: translateY(-20px); /* ¡LA CLAVE! Lo empujamos físicamente hacia arriba */
+        font-size: 1.1em; 
+        margin-bottom: 70px;
+        transform: translateY(-20px); 
     }
     .numero-gigante {
         font-size: 3.5em; 
-        transform: translateY(10px); /* Empujamos el número físicamente hacia abajo */
+        transform: translateY(10px);
     }
     .texto-mira-aqui { font-size: 1.3em; padding: 8px 18px; border: 2px solid #fff; }
     .posicion-arriba-izq { top: 40px; left: 100px; }
@@ -494,12 +472,12 @@
     .posicion-abajo-izq { top: calc(100% - 40px); left: 100px; }
     .posicion-abajo-der { top: calc(100% - 40px); left: calc(100% - 150px); }
 
-    /* --------------------------------------------------- */
-    /* 2. MENÚ PRINCIPAL DEL ALUMNO                        */
-    /* --------------------------------------------------- */
+    /* =========================================================
+    MENÚ PRINCIPAL
+    ========================================================= */
     .alumno-card {
         padding: 20px 30px;
-        max-width: 90%; /* Dejamos que se estire a lo ancho */
+        max-width: 90%;
     }
     
     .alumno-titulo {
@@ -507,7 +485,7 @@
         margin-bottom: 15px;
     }
     
-    /* Ponemos los botones en fila para aprovechar el espacio horizontal */
+    
     .alumno-botones-centrales {
         flex-direction: row;
         flex-wrap: wrap;
@@ -518,7 +496,7 @@
     .btn-menu-gigante {
         padding: 15px;
         font-size: 1.1em;
-        flex: 1; /* Todos ocupan el mismo ancho */
+        flex: 1; 
         min-width: 160px;
     }
 
@@ -530,11 +508,10 @@
         min-width: 100px;
     }
 
-    /* --------------------------------------------------- */
-    /* 3. EXAMEN (Grilla y Pantallas de Información)       */
-    /* --------------------------------------------------- */
+    /* =========================================================
+    EXAMEN
+    ========================================================= */
     
-    /* Achicamos la barra superior negra */
     .examen-header {
         height: 50px;
     }
@@ -542,13 +519,11 @@
         font-size: 1.2em;
     }
 
-    /* Achicamos la grilla para que las opciones no tapen la cámara */
     .cuadrante-opcion {
-        font-size: 1.4em; /* Letra más chica para las opciones */
+        font-size: 1.4em; 
         padding: 10px;
     }
 
-    /* Reducimos el círculo de la zona neutra */
     .zona-neutra {
         width: 100px;
         height: 100px;
@@ -556,9 +531,8 @@
         border-width: 1px;
     }
 
-    /* Pantallas informativas (Pausa, Resultados, etc.) */
     .info-pantalla-examen h2 {
-        font-size: 2em !important; /* Forzamos a que no sean gigantes */
+        font-size: 2em !important; 
         margin-bottom: 5px !important;
     }
     
@@ -566,7 +540,6 @@
         font-size: 1em !important;
     }
     
-    /* Ajuste de botones internos del examen */
     .btn-recalibrar-normal {
         margin-top: 15px;
         padding: 10px 20px;

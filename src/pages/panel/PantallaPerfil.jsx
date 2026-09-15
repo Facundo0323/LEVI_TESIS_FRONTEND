@@ -25,6 +25,10 @@ const SVG_CERRADO = (
 );
 
 function PantallaPerfil({ onLogout }) {
+
+    // -----------------------------------------------------------------------
+    // SESION Y NAVEGACIÓN
+    // -----------------------------------------------------------------------
     const navigate = useNavigate();
     const rol = sessionStorage.getItem('rol');
     const authHeaders = () => ({
@@ -32,14 +36,17 @@ function PantallaPerfil({ onLogout }) {
         'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
     });
 
+    // -----------------------------------------------------------------------
+    // CARGA DE DATOS DE PERFIL Y ESTADO DE LA PANTALLA
+    // -----------------------------------------------------------------------
     const [cargando, setCargando] = useState(false);
     const [nombreUsuario, setNombreUsuario] = useState('');
-
-    // Datos perfil (Se usa "referencia" unificando materia/vinculo)
     const [datosPerfil, setDatosPerfil]     = useState({ idUsuario: null, usuario: '', nombre: '', apellido: '', referencia: '', contacto: '' });
     const [datosOriginales, setDatosOriginales] = useState(null);
 
-    // Contraseña
+    // -----------------------------------------------------------------------
+    // MANEJO DE CONTRASEÑAS
+    // -----------------------------------------------------------------------
     const [passActual, setPassActual]       = useState('');
     const [passNueva, setPassNueva]         = useState('');
     const [passConfirmar, setPassConfirmar] = useState('');
@@ -47,17 +54,20 @@ function PantallaPerfil({ onLogout }) {
     const [showNueva, setShowNueva]         = useState(false);
     const [showConfirmar, setShowConfirmar] = useState(false);
 
-     // Referencias: Datos Generales
+    // -----------------------------------------------------------------------
+    // REFERENCIAS A INPUTS
+    // -----------------------------------------------------------------------
     const nombreRef = useRef(null);
     const apellidoRef = useRef(null);
     const referenciaRef = useRef(null);
     const contactoRef = useRef(null);
-
-    // Referencias: Cambiar Contraseña
     const passActualRef = useRef(null);
     const passNuevaRef = useRef(null);
     const passConfirmarRef = useRef(null);
 
+    // -----------------------------------------------------------------------
+    // CARGA DE DATOS DE PERFIL AL INICIAR
+    // -----------------------------------------------------------------------
     useEffect(() => {
         const cargar = async () => {
             setCargando(true);
@@ -83,6 +93,9 @@ function PantallaPerfil({ onLogout }) {
         cargar();
     }, []);
 
+    // -----------------------------------------------------------------------
+    // FUNCIONES PRINCIPALES
+    // -----------------------------------------------------------------------
     const guardarPerfil = async () => {
         setCargando(true);
         try {
@@ -155,6 +168,10 @@ function PantallaPerfil({ onLogout }) {
         }
     };
 
+    // -----------------------------------------------------------------------
+    // RENDERIZADO DE PANTALLA DE PERFIL
+    // -----------------------------------------------------------------------
+
     return (
         <div className="panel-menu-container">
             <div className="panel-header">
@@ -165,7 +182,7 @@ function PantallaPerfil({ onLogout }) {
             </div>
 
             <div className="perfil-form-container">
-                {/* ── Datos generales ── */}
+                {/* ── Datos del perfil ── */}
                 <h1 className="perfil-titulo-destacado">Editar Perfil</h1>
 
                 <div className="perfil-fila">
@@ -199,7 +216,6 @@ function PantallaPerfil({ onLogout }) {
                         }}
                     />
                 </div>
-                {/* ── El input de Referencia ahora se muestra siempre, cambiando el Label ── */}
                 <div className="perfil-fila">
                     <label>{rol === 'tutor' ? 'Vínculo:' : 'Materia:'}</label>
                     <input 
@@ -226,15 +242,18 @@ function PantallaPerfil({ onLogout }) {
                 </div>
 
                 <div className="perfil-botones">
-                    <button className="btn-perfil-outline btn-perfil-verde" disabled={cargando} onClick={guardarPerfil}>
-                        {cargando ? 'Procesando...' : 'Guardar datos'}
+                    <button 
+                        className="btn-perfil-outline btn-perfil-verde" 
+                        disabled={cargando} 
+                        onClick={guardarPerfil}>
+                            {cargando ? 'Procesando...' : 'Guardar datos'}
                     </button>
                 </div>
 
                 <hr style={{ margin: '30px 0', borderColor: '#444' }} />
 
                 {/* ── Cambiar contraseña ── */}
-                <h2 className="perfil-titulo-destacado" style={{ color: '#f39c12', fontSize: '1.5em' }}>Cambiar Contraseña</h2>
+                <h2 className="perfil-titulo-destacado" style={{ color: '#f39c12', fontSize: '1.5em' }}> Cambiar Contraseña </h2>
 
                 {[
                     { val: passActual,    set: setPassActual,    show: showActual,    setShow: setShowActual,    ph: 'Contraseña actual', ref: passActualRef, nextRef: passNuevaRef },
@@ -261,15 +280,23 @@ function PantallaPerfil({ onLogout }) {
                             }}
                             style={{ width: '100%', paddingRight: '40px', boxSizing: 'border-box' }}
                         />
-                        <button onClick={() => setShow(!show)} disabled={cargando} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>
+                        <button 
+                            onClick={() => setShow(!show)} 
+                            disabled={cargando} 
+                            style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}>
                             {show ? SVG_CERRADO : SVG_ABIERTO}
                         </button>
                     </div>
                 ))}
 
                 <div className="perfil-botones">
-                    <button className="btn-perfil-outline" style={{ width: '100%', backgroundColor: '#f39c12', color: '#fff', borderColor: '#f39c12' }} disabled={cargando} onClick={cambiarContrasena}>
-                        {cargando ? 'Procesando...' : 'Actualizar contraseña'}
+                    <button 
+                        className="btn-perfil-outline" 
+                        style={{ width: '100%', backgroundColor: '#f39c12', 
+                        color: '#fff', borderColor: '#f39c12' }} 
+                        disabled={cargando} 
+                        onClick={cambiarContrasena}>
+                            {cargando ? 'Procesando...' : 'Actualizar contraseña'}
                     </button>
                 </div>
 
@@ -277,14 +304,23 @@ function PantallaPerfil({ onLogout }) {
 
                 {/* ── Eliminar cuenta ── */}
                 <div className="perfil-botones">
-                    <button style={{ width: '100%', backgroundColor: '#e74c3c', color: '#fff', padding: '15px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', opacity: cargando ? 0.7 : 1 }} disabled={cargando} onClick={eliminarCuenta}>
-                        {cargando ? 'Procesando...' : 'Eliminar cuenta'}
+                    <button 
+                        style={{ width: '100%', backgroundColor: '#e74c3c', 
+                        color: '#fff', padding: '15px', borderRadius: '8px', 
+                        fontWeight: 'bold', border: 'none', cursor: 'pointer', 
+                        opacity: cargando ? 0.7 : 1 }} 
+                        disabled={cargando} 
+                        onClick={eliminarCuenta}>
+                            {cargando ? 'Procesando...' : 'Eliminar cuenta'}
                     </button>
                 </div>
             </div>
 
-            <button className="btn-volver-bottom" disabled={cargando} onClick={salir}>
-                Volver
+            <button 
+                className="btn-volver-bottom" 
+                disabled={cargando} 
+                onClick={salir}>
+                    Volver
             </button>
         </div>
     );

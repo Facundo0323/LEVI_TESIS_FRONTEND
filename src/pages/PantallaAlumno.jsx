@@ -1,10 +1,18 @@
+/**
+ * @file PantallaAlumno.jsx
+ * @brief Vista principal del alumno.
+ *
+ * Se encarga del stream de video desde la ESP32, la calibración ocular con OpenCV
+ * y el renderizado del cuestionario en curso (o preguntas de invitado).
+ */
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import './PantallaAlumno.css';
 import { alumnoIniciar, alumnoEstado, alumnoResponder, alumnoHeartbeat } from '../services/api';
 
-// ---------------------------------------------------------------------------
-// Constantes OpenCV
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// CONSTANTES Y FUNCIONES AUXILIARES
+// -----------------------------------------------------------------------
 const TAMAÑO_CORTE = 128;
 const TAM_MOLDE = 96;
 const MARGEN = (TAMAÑO_CORTE - TAM_MOLDE) / 2;
@@ -22,8 +30,18 @@ const ORDEN_CALIBRACION = [
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+const formatearTiempo = (totalSegundos) => {
+    const s = Math.max(0, Math.round(totalSegundos || 0));
+    const horas = Math.floor(s / 3600);
+    const minutos = Math.floor((s % 3600) / 60);
+    const segundos = s % 60;
+    const mm = String(minutos).padStart(2, '0');
+    const ss = String(segundos).padStart(2, '0');
+    return horas > 0 ? `${horas}:${mm}:${ss}` : `${mm}:${ss}`;
+};
+
 // ---------------------------------------------------------------------------
-// Caché local de opencv.js en IndexedDB
+// OPENCV
 // ---------------------------------------------------------------------------
 
 const OPENCV_DB_NAME = 'levi-opencv-cache';
@@ -54,7 +72,7 @@ async function leerOpenCvDeCache() {
             req.onerror = () => resolve(null);
         });
     } catch (_) {
-        return null; // IndexedDB no disponible por algún motivo: seguimos por red
+        return null; 
     }
 }
 
@@ -75,33 +93,14 @@ async function guardarOpenCvEnCache(codigoStr) {
             tx.onerror = resolve;
         });
     } catch (_) {
-        // No pasa nada si no se pudo cachear: la próxima vez se vuelve a intentar
+
     }
 }
 
-// Formatea segundos como "MM:SS" (o "H:MM:SS" si el examen duró más de una hora)
-const formatearTiempo = (totalSegundos) => {
-    const s = Math.max(0, Math.round(totalSegundos || 0));
-    const horas = Math.floor(s / 3600);
-    const minutos = Math.floor((s % 3600) / 60);
-    const segundos = s % 60;
-    const mm = String(minutos).padStart(2, '0');
-    const ss = String(segundos).padStart(2, '0');
-    return horas > 0 ? `${horas}:${mm}:${ss}` : `${mm}:${ss}`;
-};
-
-// ---------------------------------------------------------------------------
-// Carga de opencv.js — SINGLETON a nivel de módulo
-// Evita que remounts (StrictMode, o remount rápido del componente) disparen
-// más de una inyección/inicialización del script, lo cual corrompe el
-// runtime WASM ("Cannot register public name 'IntVector' twice", etc.)
-// ---------------------------------------------------------------------------
 let opencvLoadingPromise = null;
 
 function insertarYEsperarWasm(codigoStr, inicioFetch) {
     return new Promise((resolve) => {
-        // Última línea de defensa: si por cualquier motivo ya está inyectado
-        // o ya está vivo, no volvemos a inyectar, solo esperamos a que esté listo.
         if (document.getElementById('script-opencv-levi') || (window.cv && window.cv.Mat)) {
             console.log("[OpenCV] Script/módulo ya presente. Esperando inicialización existente.");
             const tEsp = setInterval(() => {
@@ -141,11 +140,9 @@ function insertarYEsperarWasm(codigoStr, inicioFetch) {
 }
 
 function cargarOpenCVUnaSolaVez() {
-    // Ya inicializado (ej: hot reload conservó window.cv) → resolvemos directo
     if (window.cv && window.cv.Mat) {
         return Promise.resolve();
     }
-    // Ya hay una carga en curso (otro mount / StrictMode) → reusamos esa promesa
     if (opencvLoadingPromise) {
         return opencvLoadingPromise;
     }
@@ -225,12 +222,16 @@ function cargarOpenCVUnaSolaVez() {
 }
 
 // ---------------------------------------------------------------------------
-// Componente principal
+// COMPONENTE PRINCIPAL
 // ---------------------------------------------------------------------------
 function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
 
+    // ---------------------------------------------------------------------------
+    // ESTADOS Y REFERENCIAS
+    // ---------------------------------------------------------------------------
+    
     // ── Vista principal ──────────────────────────────────────────────────
-    const [vistaAlumno, setVistaAlumno] = useState('menu'); // menu | calibracion | examen
+    const [vistaAlumno, setVistaAlumno] = useState('menu');
 
     // ── OpenCV UI ───────────────────────────────────────────────────────
     const [cvListoUI, setCvListoUI] = useState(false);
@@ -265,47 +266,41 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     const [logDecision, setLogDecision] = useState('Esperando calibración...');
     const ultimaOpcionValidaRef = useRef(null);
     const esperandoSiguienteRef = useRef(false);
-    const respondiendoRef = useRef(false); // evita doble envío simultáneo
+    const respondiendoRef = useRef(false);
 
-    // ── Estado del examen (viene del backend) ────────────────────────────
-    // 'iniciando' | 'esperando' | 'en_progreso' | 'finalizado' | 'sin_sesion'
+    // ── Examen ────────────────────────────
     const [estadoExamen, setEstadoExamen] = useState('sin_sesion');
-    const estadoExamenRef = useRef('sin_sesion'); // mirror para procesarFrame (evita stale closure)
+    const estadoExamenRef = useRef('sin_sesion');
     const [preguntaActual, setPreguntaActual] = useState(null);
-    const preguntaActualRef = useRef(null); // mirror para enviarRespuesta (evita stale closure)
-    // { idPregunta, textoPregunta, numeroPregunta, totalPreguntas, opciones:[{idOpcion,opcion}] }
+    const preguntaActualRef = useRef(null);
     const [resultado, setResultado] = useState(null);
-    // { puntajeObtenido, puntajeParaAprobar, aprobado }
 
-    // ── Modo invitado (pregunta suelta, sin puntaje) ─────────────────────
+    // ── Pregunta de invitado ─────────────────────
     const [esInvitado, setEsInvitado] = useState(false);
     const esInvitadoRef = useRef(false);
     const [resultadoInvitado, setResultadoInvitado] = useState(null);
     const [cuentaRegresivaInvitado, setCuentaRegresivaInvitado] = useState(10);
     const [cuentaRegresivaExamen, setCuentaRegresivaExamen] = useState(20);
     const [transicionando, setTransicionando] = useState(false);
-    // { pregunta, respuesta }
+
     const setEsInvitadoSync = (v) => { esInvitadoRef.current = v; setEsInvitado(v); };
 
-    const umbralConfianzaRef = useRef(0.80); // mirror para procesarFrame (evita stale closure)
+    // ── Otros ─────────────────────
+    const umbralConfianzaRef = useRef(0.80); 
 
     const pollingRef = useRef(null);
     const tokenRef = useRef(sessionStorage.getItem('tokenAlumno') || null);
     const [sesionLista, setSesionLista] = useState(false);
 
-    // ── Panel de logs en pantalla (para debug en celular, sin consola) ────
-    //const [debugLogs, setDebugLogs] = useState([]);
-    //const [debugAbierto, setDebugAbierto] = useState(false);
-    //const debugPanelRef = useRef(null);
-    //const MAX_LOGS = 150;
-
-    // Helper: setea estado y su ref mirror en un solo lugar
+    // ---------------------------------------------------------------------------
+    // FUNCIONES DE EXAMEN
+    // ---------------------------------------------------------------------------
+    
     const setEstadoExamenSync = (nuevoEstado) => {
         estadoExamenRef.current = nuevoEstado;
         setEstadoExamen(nuevoEstado);
     };
 
-    // Helper: setea preguntaActual y su ref mirror en un solo lugar
     const setPreguntaActualSync = (p) => {
         preguntaActualRef.current = p;
         setPreguntaActual(p);
@@ -317,47 +312,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
     };
 
-    // ────────────────────────────────────────────────────────────────────
-    // PANEL DE DEBUG EN PANTALLA
-    // Va primero para capturar TODOS los console.log/warn/error del resto
-    // del componente (carga de OpenCV, ESTADO BACKEND, errores de red, etc.)
-    // sin tener que salir a buscar cada uno. Se restaura al desmontar.
-    // ────────────────────────────────────────────────────────────────────
-    //useEffect(() => {
-    //    const original = { log: console.log, warn: console.warn, error: console.error };
-//
-    //    const formatearArg = (a) => {
-    //        if (typeof a === 'string') return a;
-    //        try { return JSON.stringify(a); } catch (_) { return String(a); }
-    //    };
-//
-    //    const agregarLinea = (prefijo, args) => {
-    //        const hora = new Date().toLocaleTimeString('es-AR', { hour12: false });
-    //        const texto = `[${hora}] ${prefijo}${args.map(formatearArg).join(' ')}`;
-    //        setDebugLogs(prev => {
-    //            const nuevo = [...prev, texto];
-    //            return nuevo.length > MAX_LOGS ? nuevo.slice(nuevo.length - MAX_LOGS) : nuevo;
-    //        });
-    //    };
-//
-    //    console.log = (...args) => { original.log(...args); agregarLinea('', args); };
-    //    console.warn = (...args) => { original.warn(...args); agregarLinea('⚠️ ', args); };
-    //    console.error = (...args) => { original.error(...args); agregarLinea('❌ ', args); };
-//
-    //    return () => {
-    //        console.log = original.log;
-    //        console.warn = original.warn;
-    //        console.error = original.error;
-    //    };
-    //}, []);
-
-    // Autoscroll del panel de debug hacia el final cada vez que hay líneas nuevas
-    //useEffect(() => {
-    //    if (debugAbierto && debugPanelRef.current) {
-    //        debugPanelRef.current.scrollTop = debugPanelRef.current.scrollHeight;
-    //    }
-    //}, [debugLogs, debugAbierto]);
-
+    // ---------------------------------------------------------------------------
+    // SESIÓN Y POLLING
+    // ---------------------------------------------------------------------------
 
     useEffect(() => {
         const init = async () => {
@@ -368,27 +325,19 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             } catch (e) {
                 try {
                     await alumnoHeartbeat();
-                    // Somos nosotros recargando, el token sigue vivo
                 } catch (_) {
-                    // Otro alumno conectado → alertar ANTES de pedir la cámara
                     alert('Ya hay un alumno conectado.');
-                    onAlumnoOcupado(); // redirige a home
-                    return;            // ← salimos sin activar sesionLista
+                    onAlumnoOcupado(); 
+                    return;            
                 }
             }
-            // Solo llegamos acá si la sesión es válida
             setSesionLista(true);
             setEstadoExamenSync('iniciando');
-            // consultarEstado();
-            // pollingRef.current = setInterval(consultarEstado, 2000);
         };
         init();
         return () => detenerPolling();
     }, []);
 
-    // ────────────────────────────────────────────────────────────────────
-    // POLLING DE ESTADO (cada 2s)
-    // ────────────────────────────────────────────────────────────────────
     const consultarEstado = useCallback(async () => {
         try {
             const data = await alumnoEstado();
@@ -408,9 +357,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             } else if (e === 'finalizado') {
                 setEstadoExamenSync('finalizado');
                 if (esInvitadoRef.current) {
-                    // Ya se respondió por otra vía (enviarRespuesta) y ese
-                    // camino ya cargó resultadoInvitado con la respuesta real;
-                    // esto es solo un respaldo por si el polling llega primero.
                     setResultadoInvitado(prev => prev || {
                         pregunta: preguntaActualRef.current?.textoPregunta || '',
                         respuesta: 'Respuesta registrada.'
@@ -426,7 +372,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 }
                 detenerPolling();
             } else {
-                // 'esperando', 'pausado' u otro: el alumno simplemente espera
                 setEstadoExamenSync('esperando');
                 setPreguntaActualSync(null);
                 setEsInvitadoSync(false);
@@ -448,6 +393,10 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
 
+    // ---------------------------------------------------------------------------
+    // ENVIAR RESPUESTA AL SERVIDOR
+    // ---------------------------------------------------------------------------
+
     const enviarRespuesta = useCallback(async (zonaElegida) => {
         if (!preguntaActualRef.current || respondiendoRef.current) return;
         
@@ -463,21 +412,10 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
 
         respondiendoRef.current = true;
 
-        // El polling de /estado NO se toca acá — corre sin interrupciones.
-        // Ahora el reloj del backend solo avanza dentro de obtenerEstado(),
-        // así que cualquier llamada extra a /estado (aparte del tick normal
-        // del setInterval) suma tiempo real de más. Por eso tampoco
-        // llamamos a consultarEstado() a mano más abajo: la próxima
-        // pregunta llega sola, con el próximo tick natural del polling.
-
-        // Mostramos el color de la opción elegida
         setOpcionRegistrada(zonaElegida);
 
-        // Pausa visual de 800ms para que el alumno lea "¡REGISTRADO!"
         await sleep(800);
 
-        // Limpiamos la pantalla y ponemos el cartel de transición mientras
-        // esperamos a que el polling (sin tocar) traiga la próxima pregunta
         setTransicionando(true);
 
         const opcionElegida = preguntaActualRef.current.opciones[idxZona];
@@ -504,13 +442,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 }
                 setEstadoExamenSync('finalizado');
                 setTransicionando(false);
-                detenerPolling(); // el examen terminó, no tiene sentido seguir polleando
+                detenerPolling(); 
             } else {
-                // No hacemos nada más acá: dejamos el cartel de transición
-                // puesto, y el próximo tick del polling (que nunca se
-                // detuvo) va a traer la pregunta nueva y sacar la pantalla
-                // de transición solo (ver dónde consultarEstado() actualiza
-                // preguntaActual / transicionando).
+
             }
         } catch (e) {
             console.warn('enviarRespuesta:', e.message);
@@ -524,19 +458,18 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
     }, [consultarEstado]);
 
-    // ────────────────────────────────────────────────────────────────────
-    // OPENCV — Caché local primero; si no, red con timeout + reintentos
-    // ────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------------
+    // CARGA DE OPENCV (CACHE O RED)
+    // ---------------------------------------------------------------------------
     useEffect(function inicializarMotorGrafico() {
         let activo = true;
 
         cargarOpenCVUnaSolaVez().then(() => {
-            if (!activo) return; // el componente se desmontó antes de terminar
+            if (!activo) return; 
 
             isCvReadyRef.current = true;
             setCvListoUI(true);
 
-            // Recreamos las matrices si se perdieron al desmontar/remontar
             if (!srcRef.current || srcRef.current.isDeleted()) {
                 srcRef.current = new window.cv.Mat(240, 320, window.cv.CV_8UC4);
                 dstRef.current = new window.cv.Mat(TAMAÑO_CORTE, TAMAÑO_CORTE, window.cv.CV_8UC4);
@@ -552,17 +485,15 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         };
     }, [iniciarPolling]);
 
-    // ────────────────────────────────────────────────────────────────────
-    // HEARTBEAT DE LA CÁMARA (Avisarle al CYD que el stream llega bien)
-    // ────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------------
+    // FUNCIONES DE CÁMARA Y PROCESAMIENTO DE VIDEO
+    // ---------------------------------------------------------------------------
     useEffect(function cameraHeartbeat() {
         const intervalPing = setInterval(() => {
             if (loopActivoRef.current && imgStreamRef.current) {
-                // Solo verificamos que la imagen tenga dimensiones y un source válido
                 const streamVivo = imgStreamRef.current.naturalWidth > 0 && imgStreamRef.current.hasAttribute('src');
 
                 if (streamVivo) {
-                    // Ping EXCLUSIVO al CYD. Dejamos a la cámara en paz.
                     fetch('/api/camara/ping', { headers: { 'Connection': 'close' } }).catch(() => { });
                 }
             }
@@ -571,9 +502,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         return () => clearInterval(intervalPing);
     }, []);
 
-    // ────────────────────────────────────────────────────────────────────
-    // LOOP DE VIDEO
-    // ────────────────────────────────────────────────────────────────────
     useEffect(function videoLoop() {
         let frameId;
         const ejecutarLoop = (ts) => {
@@ -599,21 +527,17 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         };
     }, [vistaAlumno]);
 
-    // Anti-borrado de React: redibujar moldes en cada render
     useEffect(() => {
         if (!isCvReadyRef.current || !window.cv) return;
         ORDEN_CALIBRACION.forEach(p => {
             const canvas = moldeCanvasRefs.current[p.id];
             const mat = moldesMatRef.current[p.id];
-            // Validamos con .cols en vez de .empty()
             if (canvas && mat && mat.cols > 0) {
                 try { window.cv.imshow(canvas, mat); } catch (_) { }
             }
         });
     });
-    // ────────────────────────────────────────────────────────────────────
-    // PROCESAMIENTO DE FRAME
-    // ────────────────────────────────────────────────────────────────────
+
     const procesarFrame = (timestamp) => {
         if (!loopActivoRef.current) return;
         if (timestamp - lastTimeRef.current < 1000 / FPS_LIMIT) return;
@@ -644,7 +568,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             roiRecorte.copyTo(dstRef.current);
             cv.cvtColor(roiRecorte, grayRef.current, cv.COLOR_RGBA2GRAY, 0);
 
-            // ── MATCHING (solo en examen, en progreso y sin esperar) ──
             if (calibradoRef.current && vistaAlumno === 'examen'
                 && estadoExamenRef.current === 'en_progreso' && !esperandoSiguienteRef.current) {
 
@@ -652,7 +575,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 let mejorZona = null;
                 for (const zona of ['centro', 'tl', 'tr', 'bl', 'br', 'cerrado']) {
                     const molde = moldesMatRef.current[zona];
-                    // Acá estaba el .empty() que hacía explotar todo. Lo cambiamos:
                     if (!molde || molde.cols === undefined || molde.cols === 0) continue;
 
                     const res = new cv.Mat();
@@ -673,13 +595,11 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                             enviarRespuesta(zonaElegida);
                         }
                     } else if (mejorZona !== 'centro') {
-                        // --- NUEVO: Validar que el cuadrante tenga texto antes de resaltarlo ---
                         const idxMejor = ZONAS.indexOf(mejorZona);
                         if (idxMejor >= 0 && preguntaActualRef.current?.opciones?.[idxMejor]) {
                             ultimaOpcionValidaRef.current = mejorZona;
                             setOpcionResaltada(mejorZona);
                         } else {
-                            // Si mira a un cuadrante vacío, lo ignoramos
                             setOpcionResaltada(null);
                             ultimaOpcionValidaRef.current = null;
                         }
@@ -690,14 +610,11 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     setLogDecision(`Buscando... (${mejorZona} ${(mejorScore * 100).toFixed(0)}%)`);
                 }
             }
-
-            if (!calibradoRef.current || vistaAlumno === 'calibracion') {
-                cv.rectangle(dstRef.current,
-                    new cv.Point(MARGEN, MARGEN),
-                    new cv.Point(MARGEN + TAM_MOLDE, MARGEN + TAM_MOLDE),
-                    new cv.Scalar(255, 255, 0, 255), 1);
-            }
-
+            cv.rectangle(dstRef.current,
+                new cv.Point(MARGEN, MARGEN),
+                new cv.Point(MARGEN + TAM_MOLDE, MARGEN + TAM_MOLDE),
+                new cv.Scalar(255, 255, 0, 255), 1);
+                
             cv.imshow(outputCanvas, dstRef.current);
             roiRecorte.delete();
         } catch (err) {
@@ -705,15 +622,14 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         }
     };
 
-    // ────────────────────────────────────────────────────────────────────
-    // CALIBRACIÓN
-    // ────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------------
+    // FUNCIONES DE CALIBRACIÓN
+    // ---------------------------------------------------------------------------
     const capturarMolde = (pasoId) => {
         try {
             const cv = window.cv;
             const gray = grayRef.current;
 
-            // Verificación hiper segura sin tocar funciones de C++
             if (!gray || gray.cols === undefined || gray.cols === 0) {
                 console.warn(`[Calibración] Imagen no lista, omitiendo ${pasoId}`);
                 return;
@@ -721,12 +637,10 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
 
             const rect = new cv.Rect(MARGEN, MARGEN, TAM_MOLDE, TAM_MOLDE);
 
-            // Si ya había un molde viejo, lo borramos para liberar RAM
             if (moldesMatRef.current[pasoId]) {
                 try { moldesMatRef.current[pasoId].delete(); } catch (e) { }
             }
 
-            // Extraer el recorte, clonarlo y limpiar el temporal (Evita fugas de memoria)
             const tempRoi = gray.roi(rect);
             moldesMatRef.current[pasoId] = tempRoi.clone();
             tempRoi.delete();
@@ -744,7 +658,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         try {
             ['centro', 'tl', 'tr', 'bl', 'br', 'cerrado'].forEach(id => {
                 const molde = moldesMatRef.current[id];
-                // Validamos con .cols en vez de .empty()
                 if (!molde || molde.cols === undefined || molde.cols === 0) return;
 
                 const tmp = document.createElement('canvas');
@@ -805,21 +718,21 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
             }
         } catch (err) {
             console.error("Error imprevisto en la secuencia de calibración:", err);
-            detenerYReiniciar(); // Devolvemos la UI a un estado seguro si algo falla
+            detenerYReiniciar();
         }
     };
 
     const detenerYReiniciar = () => { cancelarSecuenciaRef.current = true; setFaseCalibracion('inicio'); setPasoActivo(null); };
     const detenerYVolver = () => { cancelarSecuenciaRef.current = true; setVistaAlumno('menu'); };
 
-    // ────────────────────────────────────────────────────────────────────
-    // TEMPORIZADORES (Volver automáticamente a standby tras un resultado)
-    // ────────────────────────────────────────────────────────────────────
-    useEffect(() => {
+    // ---------------------------------------------------------------------------
+    // FUNCIONES DE RETORNO A STANDBY
+    // ---------------------------------------------------------------------------
+    
+    useEffect(function timerFinalización() {
         let timerId;
         if (estadoExamen === 'finalizado') {
             if (resultadoInvitado) {
-                // Temporizador de 10s para invitados
                 setCuentaRegresivaInvitado(10);
                 timerId = setInterval(() => {
                     setCuentaRegresivaInvitado((prev) => {
@@ -832,7 +745,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     });
                 }, 1000);
             } else if (resultado) {
-                // Temporizador de 20s para examen oficial
                 setCuentaRegresivaExamen(20);
                 timerId = setInterval(() => {
                     setCuentaRegresivaExamen((prev) => {
@@ -851,9 +763,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         };
     }, [estadoExamen, resultadoInvitado, resultado]);
 
-    // ────────────────────────────────────────────────────────────────────
-    // FUNCIÓN MAESTRA: Limpia todo, vuelve a "esperando" y reactiva la red
-    // ────────────────────────────────────────────────────────────────────
     const volverAStandby = () => {
         setResultadoInvitado(null);
         setResultado(null);
@@ -864,9 +773,9 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
         iniciarPolling(); 
     };
     
-    // ────────────────────────────────────────────────────────────────────
-    // CSS helper cuadrante
-    // ────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------------
+    // AUXILIARES
+    // ---------------------------------------------------------------------------
     const claseCuadrante = (zona, base) => {
         if (opcionRegistrada === zona) return `${base} cuadrante-registrado`;
         if (opcionResaltada === zona) return `${base} cuadrante-activo`;
@@ -875,21 +784,21 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
 
     const pasoActualObj = ORDEN_CALIBRACION.find(p => p.id === pasoActivo);
 
-    // ────────────────────────────────────────────────────────────────────
-    // RENDER
-    // ────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------------
+    // RENDERIZADO
+    // ---------------------------------------------------------------------------
     return (
         <div className="alumno-main-wrapper">
 
 
-            {/* Stream e hidden canvas — solo cuando la sesión está confirmada */}
+            {/* Stream y hidden canvas */}
             {sesionLista && (
                 <>
                     <img ref={imgStreamRef}
                         crossOrigin="anonymous"
                         onError={(e) => {
                             console.warn("Conexión de video interrumpida.");
-                            e.target.removeAttribute('src'); // Rompe la imagen congelada
+                            e.target.removeAttribute('src'); 
                         }}
                         onAbort={(e) => e.target.removeAttribute('src')}
                         style={{ position: 'absolute', top: 0, left: 0, width: '320px', height: '240px', opacity: 0.01, zIndex: -1, pointerEvents: 'none' }}
@@ -1013,7 +922,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                         </h1>
                     </div>
 
-                    {/* CÁMARA + SLIDER (fijos arriba a la derecha) */}
+                    {/* CÁMARA + SLIDER */}
                     <div className="camara-wrapper-absoluto">
                         <canvas ref={canvasOutputRef} width={128} height={128} className="caja-camara-verde" />
                         <div className="panel-umbral">
@@ -1086,7 +995,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                         )
                     )}
 
-                    {/* ── FINALIZADO / RESULTADOS DE INVITADO (sin puntaje) ── */}
+                    {/* ── FINALIZADO / RESULTADOS DE INVITADO ── */}
                     {estadoExamen === 'finalizado' && resultadoInvitado && (
                         <div className="info-pantalla-examen">
                             <div style={{ fontSize: '1.6em', textAlign: 'center', lineHeight: '1.6' }}>

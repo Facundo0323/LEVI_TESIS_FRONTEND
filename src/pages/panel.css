@@ -1,6 +1,5 @@
 /* src/pages/panel.css
  * CSS unificado para todas las pantallas del panel (profesor + tutor).
- * Reemplaza PantallaProfesor.css y PantallaTutor.css.
  */
 
 /* =========================================================
@@ -82,11 +81,10 @@
 .color-cuestionarios { background: #27ae60; border: 2px solid #2ecc71; }
 .color-cuestionarios:hover { background: #2ecc71; transform: scale(1.03); box-shadow: 0 5px 15px rgba(46,204,113,0.4); }
 
-/* Tutor (azul): botón "Ver datos tutor" del profesor */
 .color-tutor { background: #2980b9; border: 2px solid #3498db; }
 .color-tutor:hover { background: #3498db; transform: scale(1.03); box-shadow: 0 5px 15px rgba(52,152,219,0.4); }
 
-/* Contactos (azul violáceo): botón "Ver profesores" del tutor */
+
 .color-contactos { background: #7d3c98; border: 2px solid #9b59b6; }
 .color-contactos:hover { background: #9b59b6; transform: scale(1.03); box-shadow: 0 5px 15px rgba(155,89,182,0.4); }
 
@@ -397,7 +395,6 @@
     flex-shrink: 0;
 }
 
-/* Botones de acción genéricos */
 .btn-verde  { background: #27ae60; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .btn-verde:hover { background: #2ecc71; }
 
@@ -580,7 +577,6 @@
    CONTACTOS – TUTOR (vista del profesor) y PROFESORES (vista del tutor)
    ========================================================= */
 
-/* ── Datos del tutor ── */
 .tutor-container {
     display: flex;
     flex-direction: column;
@@ -623,7 +619,6 @@
 .tutor-valor    { color: white; font-size: 1.1em; font-weight: 500; }
 .tutor-vacio    { text-align: center; color: #bbb; font-style: italic; padding: 20px; }
 
-/* ── Lista de profesores ── */
 .profesores-sub-header {
     width: 100%;
     max-width: 800px;
@@ -697,7 +692,7 @@
 .profesor-contacto { font-style: italic; color: #9b59b6; }
 
 /* =========================================================
-   BOTÓN VOLVER FLOTANTE
+   UNIVERSAL - BOTÓN VOLVER FLOTANTE
    ========================================================= */
 
 .btn-volver-bottom {

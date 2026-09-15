@@ -1,3 +1,8 @@
+/**
+ * @file PantallaInvitado.jsx
+ * @brief Pantalla para usuarios invitados (sin cuenta) que quieren enviar preguntas rápidas a un alumno.
+ */
+
 import { useState, useRef, useEffect } from 'react';
 import './PantallaInvitado.css';
 
@@ -13,9 +18,9 @@ function PantallaInvitado({ onLogout }) {
 
     const arrayRefs = [refOp0, refOp1, refOp2, refOp3];
 
-    // ────────────────────────────────────────────────────────────────
-    // Al montar la pantalla, si no hay token, pedir sesión de invitado
-    // ────────────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------
+    // INICIO DE SESIÓN DE INVITADO
+    // -----------------------------------------------------------------------
     useEffect(() => {
         const iniciarSesionInvitado = async () => {
             const tokenExistente = sessionStorage.getItem('token');
@@ -40,13 +45,16 @@ function PantallaInvitado({ onLogout }) {
         iniciarSesionInvitado();
     }, []);
 
+    // -----------------------------------------------------------------------
+    // FUNCIONES DE MANEJO DE OPCIONES
+    // -----------------------------------------------------------------------
+
     const actualizarOpcion = (index, valor) => {
         const nuevasOpciones = [...opciones];
         nuevasOpciones[index] = valor;
         setOpciones(nuevasOpciones);
     };
 
-    // --- NUEVAS FUNCIONES VISUALES (Igual que en EditorCuestionario) ---
     const agregarOpcion = () => {
         if (opciones.length < 4) {
             setOpciones([...opciones, '']);
@@ -58,7 +66,10 @@ function PantallaInvitado({ onLogout }) {
         nuevasOpciones.splice(index, 1);
         setOpciones(nuevasOpciones);
     };
-    // -------------------------------------------------------------------
+    
+    // -----------------------------------------------------------------------
+    // ENVIAR PREGUNTA AL SERVIDOR
+    // -----------------------------------------------------------------------
 
     const guardarPregunta = async () => {
         if (!pregunta.trim()) {
@@ -96,8 +107,6 @@ function PantallaInvitado({ onLogout }) {
             }
 
             alert("¡Pregunta enviada! Ya se muestra en la pantalla del alumno.");
-            
-            // Opcional: Limpiar el formulario después de enviar exitosamente
             setPregunta('');
             setOpciones(['', '', '', '']);
         } catch (e) {
@@ -105,6 +114,10 @@ function PantallaInvitado({ onLogout }) {
             alert("Error de conexión al guardar la pregunta.");
         }
     };
+
+    // -----------------------------------------------------------------------
+    // RENDERIZADO DE PANTALLA INVITADO
+    // -----------------------------------------------------------------------
 
     return (
         <div className="invitado-page-container">
@@ -150,7 +163,6 @@ function PantallaInvitado({ onLogout }) {
                                 }}
                                 style={{ flex: 1, margin: 0 }} 
                             />
-                            {/* Botón de eliminar, igual al del editor */}
                             {opciones.length > 2 && (
                                 <button 
                                     className="btn-rojo" 
@@ -163,7 +175,6 @@ function PantallaInvitado({ onLogout }) {
                         </div>
                     ))}
 
-                    {/* Botón de agregar, igual al del editor */}
                     {opciones.length < 4 && (
                         <button 
                             className="btn-gris" 
