@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import { getTutores, getProfesores, eliminarUsuarioPorId } from '../services/api';
 
 function PantallaContactos() {
 
@@ -17,10 +18,6 @@ function PantallaContactos() {
     // -----------------------------------------------------------------------
     const navigate    = useNavigate();
     const rol         = sessionStorage.getItem('rol');
-    const authHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
-    });
 
     // -----------------------------------------------------------------------
     // CARGA DE DATOS DESDE EL BACKEND
@@ -35,22 +32,20 @@ function PantallaContactos() {
             setCargando(true);
             try {
                 if (rol === 'profesor') {
-                    const res  = await fetch('/api/usuarios/tutores', { headers: authHeaders() });
-                    const data = await res.json();
-                    if (res.ok) setTutores(data.tutores || []);
-                    else alert(data.mensaje || 'Error al cargar datos del tutor.');
+                    const data = await getTutores();
+                    setTutores(data.tutores || []);
                 } else {
-                    const res  = await fetch('/api/usuarios/profesores', { headers: authHeaders() });
-                    const data = await res.json();
-                    if (res.ok) setProfesores(data.profesores || []);
-                    else alert(data.mensaje || 'Error al cargar profesores.');
+                    const data = await getProfesores();
+                    setProfesores(data.profesores || []);
                 }
-            } catch (_) { alert('Error de conexión.'); }
-            finally { setCargando(false); }
+            } catch (error) { 
+                alert(error.message || 'Error al cargar los contactos.'); 
+            } finally { 
+                setCargando(false); 
+            }
         };
         cargar();
     }, []);
-
     // -----------------------------------------------------------------------
     // ELIMINACIÓN DE PROFESORES (solo para tutores)
     // -----------------------------------------------------------------------
@@ -60,27 +55,13 @@ function PantallaContactos() {
         
         setCargando(true);
         try {
-            const res = await fetch(`/api/usuario?id=${profe.idUsuario}`, {
-                method: 'DELETE',
-                headers: authHeaders()
-            });
-
-            if (res.ok) {
-                alert('Profesor eliminado correctamente.');
-                setProfesores(prev => prev.filter(p => p.idUsuario !== profe.idUsuario));
-            } else {
-                const textoResp = await res.text();
-                let d = {};
-
-                try{
-                    d = JSON.parse(textoResp);
-                } catch (e){
-                    d = { mensaje: textoResp };
-                }
-                alert(d.mensaje || 'Error al eliminar profesor.');
-            }
-        } catch (_) { 
-            alert('Error de conexión.'); 
+            // Usamos la función blindada que armamos hace un rato
+            await eliminarUsuarioPorId(profe.idUsuario);
+            
+            alert('Profesor eliminado correctamente.');
+            setProfesores(prev => prev.filter(p => p.idUsuario !== profe.idUsuario));
+        } catch (error) { 
+            alert(error.message || 'Error al eliminar profesor.'); 
         } finally { 
             setCargando(false); 
         }

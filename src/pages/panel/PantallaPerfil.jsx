@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import { getPerfil, editarPerfil, cambiarPassword, eliminarUsuarioPorId } from '../services/api';
 
 const SVG_ABIERTO = (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -72,23 +73,23 @@ function PantallaPerfil({ onLogout }) {
         const cargar = async () => {
             setCargando(true);
             try {
-                const res  = await fetch('/api/auth/perfil', { headers: authHeaders() });
-                const data = await res.json();
-                if (res.ok) {
-                    const cargado = { 
-                        idUsuario: data.idUsuario, 
-                        usuario: data.usuario, 
-                        nombre: data.nombre, 
-                        apellido: data.apellido, 
-                        referencia: data.referencia || '', 
-                        contacto: data.contacto || '' 
-                    };
-                    setDatosPerfil(cargado);
-                    setDatosOriginales(cargado);
-                    setNombreUsuario(`${data.nombre} ${data.apellido}`);
-                } else alert(data.mensaje || 'Error al cargar perfil.');
-            } catch (_) { alert('Error de conexión.'); }
-            finally { setCargando(false); }
+                const data = await getPerfil();
+                const cargado = { 
+                    idUsuario: data.idUsuario, 
+                    usuario: data.usuario, 
+                    nombre: data.nombre, 
+                    apellido: data.apellido, 
+                    referencia: data.referencia || '', 
+                    contacto: data.contacto || '' 
+                };
+                setDatosPerfil(cargado);
+                setDatosOriginales(cargado);
+                setNombreUsuario(`${data.nombre} ${data.apellido}`);
+            } catch (error) { 
+                alert(error.message || 'Error al cargar perfil.'); 
+            } finally { 
+                setCargando(false); 
+            }
         };
         cargar();
     }, []);
@@ -99,59 +100,43 @@ function PantallaPerfil({ onLogout }) {
     const guardarPerfil = async () => {
         setCargando(true);
         try {
-            const res  = await fetch('/api/usuarios/perfil', { method: 'PUT', headers: authHeaders(), body: JSON.stringify(datosPerfil) });
-            const data = await res.json();
-            if (res.ok) {
-                alert('¡Perfil actualizado con éxito!');
-                setNombreUsuario(`${datosPerfil.nombre} ${datosPerfil.apellido}`);
-                setDatosOriginales(datosPerfil);
-            } else alert(data.mensaje || 'Error al actualizar.');
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            await editarPerfil(datosPerfil);
+            alert('¡Perfil actualizado con éxito!');
+            setNombreUsuario(`${datosPerfil.nombre} ${datosPerfil.apellido}`);
+            setDatosOriginales(datosPerfil);
+        } catch (error) { 
+            alert(error.message || 'Error al actualizar.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
-
-    const cambiarContrasena = async () => {
+    const cambiarContrasenaLocal = async () => { 
         if (!passActual || !passNueva || !passConfirmar) return alert('Completá todas las contraseñas.');
         if (passNueva !== passConfirmar) return alert('Las contraseñas nuevas no coinciden.');
         setCargando(true);
         try {
-            const res  = await fetch('/api/usuarios/perfil/password', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ passwordActual: passActual, passwordNueva: passNueva, confirmar: passConfirmar }) });
-            const data = await res.json();
-            if (res.ok) { alert('¡Contraseña actualizada!'); setPassActual(''); setPassNueva(''); setPassConfirmar(''); }
-            else alert(data.mensaje || 'Error al cambiar contraseña.');
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            await cambiarPassword({ 
+                passwordActual: passActual, 
+                passwordNueva: passNueva, 
+                confirmar: passConfirmar 
+            });
+            alert('¡Contraseña actualizada!'); 
+            setPassActual(''); setPassNueva(''); setPassConfirmar('');
+        } catch (error) { 
+            alert(error.message || 'Error al cambiar contraseña.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
-
     const eliminarCuenta = async () => {
-
         if (window.confirm(`¿Estás seguro de que querés eliminar DEFINITIVAMENTE tu cuenta de usuario "${datosPerfil.usuario}"?\nEsta acción no se puede deshacer.`)) {
             setCargando(true);
             try {
-                const url = `/api/usuario?id=${datosPerfil.idUsuario}`;
-                
-                const respuesta = await fetch(url, {
-                    method: 'DELETE',
-                    headers: authHeaders() 
-                });
-
-                const textoResp = await respuesta.text();
-                let datos = {};
-                try {
-                    datos = JSON.parse(textoResp);
-                } catch (e) {
-                    datos = { mensaje: textoResp };
-                }
-
-                if (respuesta.ok) {
-                    alert(datos.mensaje || "Tu cuenta fue eliminada correctamente.");
-                    onLogout(); 
-                } else {
-                    alert(datos.mensaje || "Error al intentar eliminar la cuenta.");
-                }
+                await eliminarUsuarioPorId(datosPerfil.idUsuario);
+                alert("Tu cuenta fue eliminada correctamente.");
+                onLogout(); 
             } catch (error) {
-                console.error("Error de red:", error);
-                alert("Error de conexión con el servidor.");
+                alert(error.message || "Error al intentar eliminar la cuenta.");
             } finally {
                 setCargando(false);
             }

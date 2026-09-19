@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import { getPerfil } from '../services/api';
 
 function PantallaPanel({ onLogout }) {
     const navigate = useNavigate();
@@ -19,16 +20,9 @@ function PantallaPanel({ onLogout }) {
     useEffect(() => {
         const cargarNombre = async () => {
             try {
-                const res = await fetch('/api/auth/perfil', {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
-                    },
-                });
-                const data = await res.json();
-                if (res.ok) setNombreUsuario(`${data.nombre} ${data.apellido}`);
+                const data = await getPerfil();
+                setNombreUsuario(`${data.nombre} ${data.apellido}`);
             } catch (_) {
-                
             }
         };
         cargarNombre();

@@ -10,6 +10,10 @@
 import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import { 
+    getCuestionarios, cambiarEstadoCuestionario, eliminarCuestionarioPorId, 
+    getRevisionCuestionario, getCuestionarioCompleto, crearCuestionario, editarCuestionario 
+} from '../services/api';
 
     // -----------------------------------------------------------------------
     // CONFIGURACIÓN DE ESTADOS
@@ -516,11 +520,6 @@ function PantallaCuestionario() {
     const navigate = useNavigate();
     const rol = sessionStorage.getItem('rol');
 
-    const authHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`,
-    });
-
     const [vista, setVista] = useState('lista'); 
     const [cargando, setCargando] = useState(false);
 
@@ -547,55 +546,43 @@ function PantallaCuestionario() {
     const cargarCuestionarios = async () => {
         setCargando(true);
         try {
-            const res  = await fetch('/api/cuestionarios', { headers: authHeaders() });
-            const data = await res.json();
-            if (res.ok) setCuestionarios(data.cuestionarios || []);
-            else alert(data.mensaje || 'Error al cargar cuestionarios.');
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            const data = await getCuestionarios();
+            setCuestionarios(data.cuestionarios || []);
+        } catch (error) { 
+            alert(error.message || 'Error al cargar cuestionarios.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
 
     const cambiarEstado = async (id, accion) => {
-    setCargando(true);
-    try {
-        let payload = {};
-
-        if (accion === 'iniciar') {
-            payload = {
-                timestampMs: Date.now(),
-                fechaISO: new Date().toISOString()
-            };
+        setCargando(true);
+        try {
+            let payload = {};
+            if (accion === 'iniciar') {
+                payload = { timestampMs: Date.now(), fechaISO: new Date().toISOString() };
+            }
+            
+            await cambiarEstadoCuestionario(id, accion, payload);
+            await cargarCuestionarios(); // Recargamos la lista
+        } catch (error) {
+            alert(error.message || 'Error.');
+        } finally {
+            setCargando(false);
         }
-
-        const body = JSON.stringify(payload);
-
-        const res = await fetch(`/api/cuestionario/${accion}?id=${id}`, {
-            method: 'PATCH',
-            headers: authHeaders(),
-            body
-        });
-        if (res.ok) {
-            await cargarCuestionarios();
-        } else {
-            const d = await res.json();
-            alert(d.mensaje || 'Error.');
-        }
-    } catch (_) {
-        alert('Error de conexión.');
-    } finally {
-        setCargando(false);
-    }
-};
+    };
 
     const eliminarCuestionario = async (id, titulo) => {
         if (!window.confirm(`¿Eliminar "${titulo}"?`)) return;
         setCargando(true);
         try {
-            const res = await fetch(`/api/cuestionario?id=${id}`, { method: 'DELETE', headers: authHeaders() });
-            if (res.ok) await cargarCuestionarios();
-            else { const d = await res.json(); alert(d.mensaje || 'Error al eliminar.'); }
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            await eliminarCuestionarioPorId(id);
+            await cargarCuestionarios();
+        } catch (error) { 
+            alert(error.message || 'Error al eliminar.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
 
     // -----------------------------------------------------------------------
@@ -605,16 +592,15 @@ function PantallaCuestionario() {
     const abrirRevision = async (cues) => {
         setCargando(true);
         try {
-            const res = await fetch(`/api/cuestionario/revision?id=${cues.idCuestionario}`, { headers: authHeaders() });
-            const data = await res.json();
-            if (res.ok) { 
-                setCuestionarioRevision({ ...cues, tiempoSegundos: data.tiempoSegundos || 0 }); 
-                setPreguntasRevision(data.preguntas || []); 
-                setVista('revision'); 
-            }
-            else alert(data.mensaje || 'Error al cargar revisión.');
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            const data = await getRevisionCuestionario(cues.idCuestionario);
+            setCuestionarioRevision({ ...cues, tiempoSegundos: data.tiempoSegundos || 0 }); 
+            setPreguntasRevision(data.preguntas || []); 
+            setVista('revision'); 
+        } catch (error) { 
+            alert(error.message || 'Error al cargar revisión.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
 
     const iniciarNuevo = () => {
@@ -628,23 +614,23 @@ function PantallaCuestionario() {
     const abrirEditor = async (cues) => {
         setCargando(true);
         try {
-            const res  = await fetch(`/api/cuestionario?id=${cues.idCuestionario}`, { headers: authHeaders() });
-            const data = await res.json();
-            if (res.ok) {
-                setTituloTest(data.titulo);
-                setPuntosAprobar(data.puntajeParaAprobar);
-                setPreguntas((data.preguntas || []).map(p => ({
-                    pregunta: p.pregunta || '',
-                    puntaje: p.puntajeCorrecta || 1,
-                    puntajeNegativo: p.puntajeIncorrecta || 0,
-                    correcta: p.opciones ? p.opciones.findIndex(o => o.esCorrecta) : 0,
-                    opciones: p.opciones ? p.opciones.map(o => o.opcion) : ['', ''],
-                })));
-                setIdEditando(cues.idCuestionario);
-                setVista('editor');
-            } else alert(data.mensaje || 'Error al cargar datos.');
-        } catch (_) { alert('Error de conexión.'); }
-        finally { setCargando(false); }
+            const data = await getCuestionarioCompleto(cues.idCuestionario);
+            setTituloTest(data.titulo);
+            setPuntosAprobar(data.puntajeParaAprobar);
+            setPreguntas((data.preguntas || []).map(p => ({
+                pregunta: p.pregunta || '',
+                puntaje: p.puntajeCorrecta || 1,
+                puntajeNegativo: p.puntajeIncorrecta || 0,
+                correcta: p.opciones ? p.opciones.findIndex(o => o.esCorrecta) : 0,
+                opciones: p.opciones ? p.opciones.map(o => o.opcion) : ['', ''],
+            })));
+            setIdEditando(cues.idCuestionario);
+            setVista('editor');
+        } catch (error) { 
+            alert(error.message || 'Error al cargar datos.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
 
     // -----------------------------------------------------------------------
@@ -668,18 +654,22 @@ function PantallaCuestionario() {
                 opciones: p.opciones.map((texto, idx) => ({ opcion: texto.trim(), esCorrecta: idx === p.correcta })),
             })),
         };
-        const esEdicion = idEditando !== null;
-        const url    = esEdicion ? `/api/cuestionario?id=${idEditando}` : '/api/cuestionarios';
-        const method = esEdicion ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
-            if (res.ok) { alert('¡Guardado con éxito!'); await cargarCuestionarios(); setVista('lista'); }
-            else { const d = await res.json(); alert(d.mensaje || 'Error al guardar.'); }
-        } catch (_) { alert('Error de red.'); }
-        finally { setCargando(false); }
+            if (idEditando !== null) {
+                await editarCuestionario(idEditando, payload);
+            } else {
+                await crearCuestionario(payload);
+            }
+            alert('¡Guardado con éxito!'); 
+            await cargarCuestionarios(); 
+            setVista('lista');
+        } catch (error) { 
+            alert(error.message || 'Error al guardar.'); 
+        } finally { 
+            setCargando(false); 
+        }
     };
-
     // -----------------------------------------------------------------------
     // RENDERIZADO DE VISTAS
     // -----------------------------------------------------------------------

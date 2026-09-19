@@ -8,7 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import './PantallaAlumno.css';
-import { alumnoIniciar, alumnoEstado, alumnoResponder, alumnoHeartbeat } from '../services/api';
+import { pingCamara, alumnoIniciar, alumnoEstado, alumnoResponder, alumnoHeartbeat } from '../services/api';
 
 // -----------------------------------------------------------------------
 // CONSTANTES Y FUNCIONES AUXILIARES
@@ -494,7 +494,7 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                 const streamVivo = imgStreamRef.current.naturalWidth > 0 && imgStreamRef.current.hasAttribute('src');
 
                 if (streamVivo) {
-                    fetch('/api/camara/ping', { headers: { 'Connection': 'close' } }).catch(() => { });
+                    pingCamara().catch(() => {});
                 }
             }
         }, 2000);

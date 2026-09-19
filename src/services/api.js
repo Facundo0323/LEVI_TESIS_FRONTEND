@@ -129,12 +129,31 @@ export const heartbeat = () => request('POST', '/api/auth/heartbeat');
 // ---------------------------------------------------------------------------
 
 /**
- * Crea un usuario nuevo.
- * @param {{ usuario, nombre, apellido, rol, materia, contacto,
- *           password, confirmar, claveMaestra }} datos
+ * Crea un usuario nuevo (con programación defensiva).
+ * @param {object} datos
  */
-export const crearUsuario = (datos) =>
-    request('POST', '/api/usuarios', datos);
+export const crearUsuario = async (datos) => {
+    const response = await fetch(`${BASE_URL}/api/usuarios`, {
+        method: 'POST',
+        headers: buildHeaders(),
+        body: JSON.stringify(datos)
+    });
+
+    const textoResp = await response.text();
+    let data = {};
+    
+    try {
+        data = textoResp ? JSON.parse(textoResp) : {};
+    } catch (e) {
+        data = { mensaje: textoResp };
+    }
+
+    if (!response.ok) {
+        throw new Error(data.mensaje || 'Error al crear el usuario.');
+    }
+
+    return data;
+};
 
 /**
  * Elimina un usuario por nombre de login.
@@ -170,30 +189,50 @@ export const getProfesores = () => request('GET', '/api/usuarios/profesores');
  */
 export const getTutores = () => request('GET', '/api/usuarios/tutores');
 
-/**
- * Obtiene un cuestionario completo con sus preguntas y opciones
- */
-export async function getCuestionarioCompleto(id) {
-    return request('GET', `/api/cuestionarios/${id}`);
-}
 
 /**
- * Edita un cuestionario existente
+ * Elimina la cuenta del usuario actualmente logueado (con programación defensiva).
+ * @param {number} id
  */
-export async function editarCuestionario(id, datos) {
-    return request('PUT', `/api/cuestionarios/${id}`, datos);
-}
+export const eliminarUsuarioPorId = async (id) => {
+    const response = await fetch(`${BASE_URL}/api/usuario?id=${id}`, {
+        method: 'DELETE',
+        headers: buildHeaders()
+    });
+    const textoResp = await response.text();
+    let data = {};
 
-/**
- * Crea un cuestionario nuevo (POST)
- */
-export async function crearCuestionario(datos) {
-    return request('POST', '/api/cuestionarios', datos);
-}
+    try {
+        data = textoResp ? JSON.parse(textoResp) : {};
+    } catch (e) {
+        data = { mensaje: textoResp };
+    }
+
+    if (!response.ok) {
+        throw new Error(data.mensaje || 'Error al intentar eliminar la cuenta.');
+    }
+
+    return data;
+};
 
 // ---------------------------------------------------------------------------
 // ALUMNO / EXAMEN
 // ---------------------------------------------------------------------------
+
+
+/**
+ * Ping ligero a la cámara para mantener el stream vivo (Fire-and-forget)
+ */
+export const pingCamara = () => {
+    return fetch(`${BASE_URL}/api/camara/ping`, { headers: { 'Connection': 'close' } });
+};
+
+/**
+ * Envía una pregunta rápida como usuario invitado.
+ * @param {{ pregunta, opciones }} datos
+ */
+export const enviarPreguntaInvitado = (datos) => 
+    request('POST', '/api/invitado/pregunta', datos);
 
 /**
  * Inicia la sesión del alumno y obtiene un token temporal.
@@ -224,3 +263,76 @@ export const alumnoEstado = () =>
  */
 export const alumnoResponder = (idPregunta, idOpcion) =>
     request('POST', '/api/alumno/responder', { idPregunta, idOpcion }, true);
+
+// ---------------------------------------------------------------------------
+// CUESTIONARIOS
+// ---------------------------------------------------------------------------
+
+/**
+ * Obtiene la lista de cuestionarios para el rol actual.
+ */
+export const getCuestionarios = () => 
+    request('GET', '/api/cuestionarios');
+
+/**
+ * Cambia el estado de un cuestionario (iniciar, pausar, reanudar, finalizar).
+ * @param {number} id 
+ * @param {string} accion (e.g. 'iniciar')
+ * @param {object} payload 
+ */
+export const cambiarEstadoCuestionario = (id, accion, payload = {}) => 
+    request('PATCH', `/api/cuestionario/${accion}?id=${id}`, payload);
+
+/**
+ * Elimina un cuestionario por ID (con programación defensiva).
+ * @param {number} id 
+ */
+export const eliminarCuestionarioPorId = async (id) => {
+    const response = await fetch(`${BASE_URL}/api/cuestionario?id=${id}`, {
+        method: 'DELETE',
+        headers: buildHeaders()
+    });
+
+    const textoResp = await response.text();
+    let data = {};
+    
+    try {
+        data = textoResp ? JSON.parse(textoResp) : {};
+    } catch (e) {
+        data = { mensaje: textoResp };
+    }
+
+    if (!response.ok) {
+        throw new Error(data.mensaje || 'Error al eliminar el cuestionario.');
+    }
+
+    return data;
+};
+
+/**
+ * Obtiene la revisión de un cuestionario finalizado.
+ * @param {number} id 
+ */
+export const getRevisionCuestionario = (id) => 
+    request('GET', `/api/cuestionario/revision?id=${id}`);
+
+/**
+ * Obtiene un cuestionario completo con sus preguntas y opciones
+ */
+export async function getCuestionarioCompleto(id) {
+    return request('GET', `/api/cuestionarios/${id}`);
+}
+
+/**
+ * Edita un cuestionario existente
+ */
+export async function editarCuestionario(id, datos) {
+    return request('PUT', `/api/cuestionarios/${id}`, datos);
+}
+
+/**
+ * Crea un cuestionario nuevo (POST)
+ */
+export async function crearCuestionario(datos) {
+    return request('POST', '/api/cuestionarios', datos);
+}

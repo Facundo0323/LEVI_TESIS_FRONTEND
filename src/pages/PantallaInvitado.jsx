@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import './PantallaInvitado.css';
+import { loginInvitado, enviarPreguntaInvitado } from '../services/api';
 
 function PantallaInvitado({ onLogout }) {
     const [pregunta, setPregunta] = useState('');
@@ -29,17 +30,11 @@ function PantallaInvitado({ onLogout }) {
                 return;
             }
             try {
-                const res = await fetch('/api/auth/invitado', { method: 'POST' });
-                const data = await res.json();
-                if (data.ok) {
-                    sessionStorage.setItem('token', data.token);
-                    setSesionLista(true);
-                } else {
-                    alert(data.mensaje || "No se pudo iniciar sesión de invitado.");
-                }
+                await loginInvitado();
+                setSesionLista(true);
             } catch (e) {
                 console.error('iniciarSesionInvitado:', e);
-                alert("Error de conexión al iniciar sesión de invitado.");
+                alert(e.message || "Error al iniciar sesión de invitado.");
             }
         };
         iniciarSesionInvitado();
@@ -70,7 +65,6 @@ function PantallaInvitado({ onLogout }) {
     // -----------------------------------------------------------------------
     // ENVIAR PREGUNTA AL SERVIDOR
     // -----------------------------------------------------------------------
-
     const guardarPregunta = async () => {
         if (!pregunta.trim()) {
             alert("Por favor, escribe una pregunta.");
@@ -84,34 +78,18 @@ function PantallaInvitado({ onLogout }) {
             return;
         }
 
-        const token = sessionStorage.getItem('token');
-
         try {
-            const res = await fetch('/api/invitado/pregunta', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    pregunta: pregunta.trim(),
-                    opciones: opcionesValidas
-                })
+            await enviarPreguntaInvitado({
+                pregunta: pregunta.trim(),
+                opciones: opcionesValidas
             });
-
-            const data = await res.json();
-
-            if (!res.ok || !data.ok) {
-                alert(data.mensaje || "No se pudo guardar la pregunta.");
-                return;
-            }
 
             alert("¡Pregunta enviada! Ya se muestra en la pantalla del alumno.");
             setPregunta('');
             setOpciones(['', '', '', '']);
         } catch (e) {
             console.error('guardarPregunta:', e);
-            alert("Error de conexión al guardar la pregunta.");
+            alert(e.message || "Error de conexión al guardar la pregunta.");
         }
     };
 

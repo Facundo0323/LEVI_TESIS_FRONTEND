@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import './PantallaLogueo.css'; 
+import { login, crearUsuario, cambiarPassword } from '../services/api';
 
 function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [vistaActual, setVistaActual] = useState('login');
@@ -75,38 +76,21 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         }
 
         try {
-            const respuesta = await fetch(`${BACKEND_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    usuario: loginUser.trim().toLowerCase(), 
-                    password: loginPass 
-                })
-            });
+            const datos = await login(loginUser.trim().toLowerCase(), loginPass);
 
-            const datos = await respuesta.json();
-
-            if (respuesta.ok) {
-                const rolDelUsuario = datos.rol || 'profesor';
-                const nombreReal = datos.nombre || loginUser;
-                const token = datos.token;
-                
-                sessionStorage.setItem('token', token);
-                sessionStorage.setItem('rol', rolDelUsuario);
-                sessionStorage.setItem('nombreSesionActiva', nombreReal);
-                
-                alert(`¡Se inició sesión correctamente como ${rolDelUsuario}!`);
-                
-                onLoginSuccess(rolDelUsuario);
-                setLoginUser('');
-                setLoginPass('');
-            } else {
-                alert(datos.mensaje || "Usuario o contraseña incorrectos");
-                setLoginPass('');
-            }
+            const rolDelUsuario = datos.rol || 'profesor';
+            const nombreReal = datos.nombre || loginUser;
+            
+            sessionStorage.setItem('nombreSesionActiva', nombreReal); 
+            
+            alert(`¡Se inició sesión correctamente como ${rolDelUsuario}!`);
+            
+            onLoginSuccess(rolDelUsuario);
+            setLoginUser('');
+            setLoginPass('');
         } catch (error) {
-            console.error("Error al conectar con el backend:", error);
-            alert("Error de conexión con el servidor.");
+            alert(error.message || "Usuario o contraseña incorrectos");
+            setLoginPass('');
         }
     };
 
@@ -125,10 +109,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     }
 
     try {
-        const respuesta = await fetch(`${BACKEND_URL}/api/usuarios`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+            await crearUsuario({
                 usuario: regUser.trim().toLowerCase(),
                 nombre: regNombre.trim(),
                 apellido: regApellido.trim(),
@@ -138,27 +119,13 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
                 password: regPass1,
                 confirmar: regPass2,
                 claveMaestra: regClave.trim() 
-            })
-        });
+            });
 
-        const textoResp = await respuesta.text();
-        let datos = {};
-        try {
-            datos = JSON.parse(textoResp);
-        } catch (e) {
-            datos = { mensaje: textoResp };
-        }
-
-        if (respuesta.ok) {
-            alert(datos.mensaje || `¡Usuario creado con éxito como ${regRol}!`);
+            alert(`¡Usuario creado con éxito como ${regRol}!`);
             cancelarRegistro();
-        } else {
-            alert(datos.mensaje || "Error al crear el usuario.");
+        } catch (error) {
+            alert(error.message || "Error al crear el usuario.");
         }
-    } catch (error) {
-        console.error("Error real en el fetch:", error);
-        alert("Error de conexión real con el servidor.");
-    }
 };
 
     // -----------------------------------------------------------------------
@@ -171,28 +138,17 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         }
 
         try {
-            const respuesta = await fetch(`${BACKEND_URL}/api/usuarios/password`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    usuario: recUser.trim().toLowerCase(),
-                    claveMaestra: recClave.trim().toLowerCase(),
-                    passwordNueva: recPass1,
-                    confirmar: recPass2
-                })
+            await cambiarPassword({
+                usuario: recUser.trim().toLowerCase(),
+                claveMaestra: recClave.trim().toLowerCase(),
+                passwordNueva: recPass1,
+                confirmar: recPass2
             });
 
-            const datos = await respuesta.json();
-
-            if (respuesta.ok) {
-                alert(datos.mensaje || "¡Contraseña restablecida con éxito!");
-                cancelarRecuperacion();
-            } else {
-                alert(datos.mensaje || "Error al recuperar la contraseña.");
-            }
+            alert("¡Contraseña restablecida con éxito!");
+            cancelarRecuperacion();
         } catch (error) {
-            console.error("Error de red:", error);
-            alert("Error de conexión con el servidor.");
+            alert(error.message || "Error al recuperar la contraseña.");
         }
     };
 
