@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
-import { getPerfil } from '../services/api';
+import { getPerfil } from '../../services/api';
 
 function PantallaPanel({ onLogout }) {
     const navigate = useNavigate();

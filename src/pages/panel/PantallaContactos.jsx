@@ -9,7 +9,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
-import { getTutores, getProfesores, eliminarUsuarioPorId } from '../services/api';
+import { getTutores, getProfesores, eliminarUsuarioPorId } from '../../services/api';
 
 function PantallaContactos() {
 

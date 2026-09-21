@@ -10,7 +10,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
-import { getPerfil, editarPerfil, cambiarPassword, eliminarUsuarioPorId } from '../services/api';
+import { getPerfil, editarPerfil, cambiarMiPassword, eliminarUsuarioPorId } from '../../services/api';
 
 const SVG_ABIERTO = (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -115,7 +115,7 @@ function PantallaPerfil({ onLogout }) {
         if (passNueva !== passConfirmar) return alert('Las contraseñas nuevas no coinciden.');
         setCargando(true);
         try {
-            await cambiarPassword({ 
+            await cambiarMiPassword({ 
                 passwordActual: passActual, 
                 passwordNueva: passNueva, 
                 confirmar: passConfirmar 
@@ -259,7 +259,7 @@ function PantallaPerfil({ onLogout }) {
                                     if (nextRef) {
                                         nextRef.current?.focus();
                                     } else {
-                                        cambiarContrasena(); 
+                                        cambiarContrasenaLocal(); 
                                     }
                                 }
                             }}
@@ -280,7 +280,7 @@ function PantallaPerfil({ onLogout }) {
                         style={{ width: '100%', backgroundColor: '#f39c12', 
                         color: '#fff', borderColor: '#f39c12' }} 
                         disabled={cargando} 
-                        onClick={cambiarContrasena}>
+                        onClick={cambiarContrasenaLocal}>
                             {cargando ? 'Procesando...' : 'Actualizar contraseña'}
                     </button>
                 </div>

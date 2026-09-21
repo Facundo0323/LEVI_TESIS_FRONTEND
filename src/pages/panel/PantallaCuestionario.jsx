@@ -13,7 +13,7 @@ import '../panel.css';
 import { 
     getCuestionarios, cambiarEstadoCuestionario, eliminarCuestionarioPorId, 
     getRevisionCuestionario, getCuestionarioCompleto, crearCuestionario, editarCuestionario 
-} from '../services/api';
+} from '../../services/api';
 
     // -----------------------------------------------------------------------
     // CONFIGURACIÓN DE ESTADOS

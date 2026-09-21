@@ -171,11 +171,18 @@ export const editarPerfil = (datos) =>
     request('PUT', '/api/usuarios/perfil', datos);
 
 /**
- * Cambia la contraseña del usuario logueado.
+ * Recupera la contraseña desde el login (requiere clave maestra y usuario).
+ * @param {{ usuario, claveMaestra, passwordNueva, confirmar }} datos
+ */
+export const recuperarPassword = (datos) =>
+    request('PUT', '/api/usuarios/password', datos);
+
+/**
+ * Cambia la contraseña del usuario logueado desde su perfil.
  * @param {{ passwordActual, passwordNueva, confirmar }} datos
  */
-export const cambiarPassword = (datos) =>
-    request('PUT', '/api/usuarios/password', datos);
+export const cambiarMiPassword = (datos) =>
+    request('PUT', '/api/usuarios/perfil/password', datos);
 
 /**
  * Lista los profesores (para panel tutor y profesor).
@@ -320,14 +327,14 @@ export const getRevisionCuestionario = (id) =>
  * Obtiene un cuestionario completo con sus preguntas y opciones
  */
 export async function getCuestionarioCompleto(id) {
-    return request('GET', `/api/cuestionarios/${id}`);
+    return request('GET', `/api/cuestionario?id=${id}`);
 }
 
 /**
  * Edita un cuestionario existente
  */
 export async function editarCuestionario(id, datos) {
-    return request('PUT', `/api/cuestionarios/${id}`, datos);
+    return request('PUT', `/api/cuestionario?id=${id}`, datos);
 }
 
 /**

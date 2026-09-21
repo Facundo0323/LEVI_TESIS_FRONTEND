@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import './PantallaLogueo.css'; 
-import { login, crearUsuario, cambiarPassword } from '../services/api';
+import { login, crearUsuario, recuperarPassword } from '../services/api';
 
 function PantallaLogueo({ onLoginSuccess, onGoBack }) {
     const [vistaActual, setVistaActual] = useState('login');
@@ -138,7 +138,7 @@ function PantallaLogueo({ onLoginSuccess, onGoBack }) {
         }
 
         try {
-            await cambiarPassword({
+            await recuperarPassword({
                 usuario: recUser.trim().toLowerCase(),
                 claveMaestra: recClave.trim().toLowerCase(),
                 passwordNueva: recPass1,
