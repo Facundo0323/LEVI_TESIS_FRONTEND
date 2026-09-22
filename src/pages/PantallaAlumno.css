@@ -206,7 +206,7 @@
     animation: latido-brillo 0.6s infinite alternate; 
     white-space: nowrap;
 }
-.posicion-centro { top: 50%; left: 50%; }
+.posicion-centro { top: 290px; left: 50%; }
 .posicion-arriba-izq { top: 100px; left: 180px; }
 .posicion-arriba-der { top: 100px; left: calc(100% - 330px); } 
 .posicion-abajo-izq { top: calc(100% - 100px); left: 180px; }
@@ -429,7 +429,13 @@
 /* --- ADAPTACIÓN PARA CELULARES HORIZONTALES (LANDSCAPE) -- */
 /* ========================================================= */
 @media (max-height: 500px) and (orientation: landscape) {
-    
+    .alumno-main-wrapper,
+    .calibracion-pantalla-completa,
+    .examen-pantalla-completa {
+        height: 100vh;
+        height: 100dvh;
+    }
+
    /* =========================================================
    CALIBRACIÓN
    ========================================================= */
@@ -467,6 +473,7 @@
         transform: translateY(10px);
     }
     .texto-mira-aqui { font-size: 1.3em; padding: 8px 18px; border: 2px solid #fff; }
+    .posicion-centro { top: 50%; left: 50%; }
     .posicion-arriba-izq { top: 40px; left: 100px; }
     .posicion-arriba-der { top: 40px; left: calc(100% - 150px); }
     .posicion-abajo-izq { top: calc(100% - 40px); left: 100px; }
@@ -517,6 +524,13 @@
     }
     .examen-header h1 {
         font-size: 1.2em;
+    }
+
+    .info-pantalla-examen {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px 0;
+        box-sizing: border-box;
     }
 
     .cuadrante-opcion {
