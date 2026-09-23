@@ -748,7 +748,12 @@ button:disabled {
     }
 
     /* Editor */
-    .panel-titulo  { font-size: 2.2em !important; }
+    .panel-titulo  {
+        font-size: 2.2em !important;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
     .panel-desc    { font-size: 0.85em !important; padding: 0 15px; }
     .pregunta-input { font-size: 14px !important; padding: 8px 10px !important; }
     .form-panel input::placeholder { font-size: 14px !important; }

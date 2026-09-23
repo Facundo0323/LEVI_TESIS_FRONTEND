@@ -193,8 +193,6 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
     // FUNCIONES EXCLUSIVAS DEL EDITOR
     // -----------------------------------------------------------------------
     
-    const [editandoTitulo, setEditandoTitulo] = useState(false);
-
     const agregarPregunta = () => {
         setPreguntas([...preguntas, { pregunta: '', correcta: 0, puntaje: 1, puntajeNegativo: 0, opciones: ['', '', '', ''] }]);
         setTimeout(() => document.getElementById(`cues-preg-${preguntas.length}`)?.focus(), 100);
@@ -239,41 +237,20 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
 
     return (
         <div className="panel-page-container">
-            {/* Título editable */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '10px' }}>
-                {editandoTitulo ? (
-                    <>
-                        <input
-                            type="text" value={tituloTest}
-                            onChange={e => setTituloTest(e.target.value)}
-                            onKeyDown={e => { 
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    setEditandoTitulo(false);
-                                    setTimeout(() => document.getElementById('cues-preg-0')?.focus(), 100);
-                                } 
-                            }}
-                            style={{ fontSize: '2.5em', background: '#222', color: '#e74c3c', border: '1px solid #555', borderRadius: '8px', padding: '5px 15px', textAlign: 'center', fontWeight: 'bold' }}
-                            autoFocus
-                        />
-                        <button 
-                            className="btn-verde" 
-                            onClick={() => setEditandoTitulo(false)} 
-                            style={{ padding: '10px 15px', fontSize: '1.2em' }}>
-                                ✔
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <h1 className="panel-titulo" style={{ marginBottom: 0 }}>{tituloTest}</h1>
-                        <button 
-                            className="btn-gris" 
-                            onClick={() => setEditandoTitulo(true)} 
-                            style={{ padding: '8px 12px', fontSize: '1.2em', background: '#333' }}>
-                                ✎
-                        </button>
-                    </>
-                )}
+            {/* Título */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                <input
+                    type="text" value={tituloTest}
+                    className="panel-titulo"
+                    onChange={e => setTituloTest(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            document.getElementById('cues-preg-0')?.focus();
+                        }
+                    }}
+                    style={{ fontSize: '2.5em', background: '#222', color: '#e74c3c', border: '1px solid #555', borderRadius: '8px', padding: '5px 15px', textAlign: 'center', fontWeight: 'bold' }}
+                />
             </div>
 
             <p className="panel-desc">Escribe tus preguntas. Puedes agregar tantas como desees.</p>

@@ -529,8 +529,27 @@
     .info-pantalla-examen {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
         padding: 10px 0;
         box-sizing: border-box;
+    }
+
+    .info-pantalla-examen > div:first-child {
+        font-size: 1.3em !important;
+        line-height: 1.3 !important;
+    }
+
+    .info-pantalla-examen > div:first-child p {
+        margin: 3px 0 !important;
+    }
+
+    .info-pantalla-examen > div:first-child p:last-child {
+        margin-top: 10px !important;
+    }
+
+    .info-pantalla-examen > div:last-child {
+        margin-top: 12px !important;
+        font-size: 1em !important;
     }
 
     .cuadrante-opcion {
