@@ -8,7 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import './PantallaAlumno.css';
-import { pingCamara, alumnoIniciar, alumnoEstado, alumnoResponder, alumnoHeartbeat } from '../services/api';
+import { alumnoIniciar, alumnoEstado, alumnoResponder, alumnoHeartbeat } from '../services/api';
 
 // -----------------------------------------------------------------------
 // CONSTANTES Y FUNCIONES AUXILIARES
@@ -488,20 +488,6 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
     // ---------------------------------------------------------------------------
     // FUNCIONES DE CÁMARA Y PROCESAMIENTO DE VIDEO
     // ---------------------------------------------------------------------------
-    useEffect(function cameraHeartbeat() {
-        const intervalPing = setInterval(() => {
-            if (loopActivoRef.current && imgStreamRef.current) {
-                const streamVivo = imgStreamRef.current.naturalWidth > 0 && imgStreamRef.current.hasAttribute('src');
-
-                if (streamVivo) {
-                    pingCamara().catch(() => {});
-                }
-            }
-        }, 2000);
-
-        return () => clearInterval(intervalPing);
-    }, []);
-
     useEffect(function videoLoop() {
         let frameId;
         const ejecutarLoop = (ts) => {
