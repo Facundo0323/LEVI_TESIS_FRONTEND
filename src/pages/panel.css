@@ -715,6 +715,28 @@
 }
 
 /* =========================================================
+   PAGINADOR (listados de cuestionarios, profesores y tutores)
+   ========================================================= */
+
+.paginador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 20px 0 90px;   /* abajo deja lugar al botón Volver fijo */
+}
+
+.paginador button {
+    padding: 8px 16px;
+}
+
+.paginador-texto {
+    color: #ccc;
+    font-size: 0.95em;
+}
+
+/* =========================================================
    UNIVERSAL – BOTONES DESHABILITADOS
    ========================================================= */
 
