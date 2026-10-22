@@ -596,11 +596,13 @@ function PantallaAlumno({ onLogout, onAlumnoOcupado }) {
                     setLogDecision(`Buscando... (${mejorZona} ${(mejorScore * 100).toFixed(0)}%)`);
                 }
             }
-            cv.rectangle(dstRef.current,
-                new cv.Point(MARGEN, MARGEN),
-                new cv.Point(MARGEN + TAM_MOLDE, MARGEN + TAM_MOLDE),
-                new cv.Scalar(255, 255, 0, 255), 1);
-                
+            
+            if (vistaAlumno === 'calibracion') {
+                cv.rectangle(dstRef.current,
+                    new cv.Point(MARGEN, MARGEN),
+                    new cv.Point(MARGEN + TAM_MOLDE, MARGEN + TAM_MOLDE),
+                    new cv.Scalar(255, 255, 0, 255), 1);
+            }
             cv.imshow(outputCanvas, dstRef.current);
             roiRecorte.delete();
         } catch (err) {
