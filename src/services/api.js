@@ -60,8 +60,23 @@ const request = async (method, path, body = null, alumno = false) => {
     };
     if (body) options.body = JSON.stringify(body);
 
-    const response = await fetch(`${BASE_URL}${path}`, options);
-    const data = await response.json();
+    let response;
+    try {
+        response = await fetch(`${BASE_URL}${path}`, options);
+    } catch (_) {
+        // La placa no respondió (se cortó la conexión, se reinició, sin WiFi, etc.)
+        throw new Error('No se pudo conectar con LEVI. Revisá la conexión e intentá de nuevo.');
+    }
+
+    // Si la respuesta no es JSON (por ejemplo, un error de texto plano), no se
+    // muestra el error técnico del parser sino el texto o un mensaje genérico.
+    const texto = await response.text();
+    let data = {};
+    try {
+        data = texto ? JSON.parse(texto) : {};
+    } catch (_) {
+        data = { mensaje: texto };
+    }
 
     if (!response.ok) {
         throw new Error(data.mensaje || 'Error desconocido del servidor.');
@@ -185,16 +200,20 @@ export const cambiarMiPassword = (datos) =>
     request('PUT', '/api/usuarios/perfil/password', datos);
 
 /**
- * Lista los profesores (para panel tutor y profesor).
- * @returns {{ profesores: ProfesorResumen[] }}
+ * Lista una página de profesores (para panel tutor y profesor).
+ * @param {number} pagina Número de página (empieza en 1).
+ * @returns {{ profesores: ProfesorResumen[], pagina, porPagina, total, totalPaginas }}
  */
-export const getProfesores = () => request('GET', '/api/usuarios/profesores');
+export const getProfesores = (pagina = 1) =>
+    request('GET', `/api/usuarios/profesores?pagina=${pagina}`);
 
 /**
- * Lista los tutores (para panel profesor).
- * @returns {{ tutores: TutorResumen[] }}
+ * Lista una página de tutores (para panel profesor).
+ * @param {number} pagina Número de página (empieza en 1).
+ * @returns {{ tutores: TutorResumen[], pagina, porPagina, total, totalPaginas }}
  */
-export const getTutores = () => request('GET', '/api/usuarios/tutores');
+export const getTutores = (pagina = 1) =>
+    request('GET', `/api/usuarios/tutores?pagina=${pagina}`);
 
 
 /**
@@ -226,13 +245,6 @@ export const eliminarUsuarioPorId = async (id) => {
 // ALUMNO / EXAMEN
 // ---------------------------------------------------------------------------
 
-
-/**
- * Ping ligero a la cámara para mantener el stream vivo (Fire-and-forget)
- */
-export const pingCamara = () => {
-    return fetch(`${BASE_URL}/api/camara/ping`, { headers: { 'Connection': 'close' } });
-};
 
 /**
  * Envía una pregunta rápida como usuario invitado.
@@ -276,10 +288,12 @@ export const alumnoResponder = (idPregunta, idOpcion) =>
 // ---------------------------------------------------------------------------
 
 /**
- * Obtiene la lista de cuestionarios para el rol actual.
+ * Obtiene una página de la lista de cuestionarios para el rol actual.
+ * @param {number} pagina Número de página (empieza en 1).
+ * @returns {{ cuestionarios: [], pagina, porPagina, total, totalPaginas }}
  */
-export const getCuestionarios = () => 
-    request('GET', '/api/cuestionarios');
+export const getCuestionarios = (pagina = 1) =>
+    request('GET', `/api/cuestionarios?pagina=${pagina}`);
 
 /**
  * Cambia el estado de un cuestionario (iniciar, pausar, reanudar, finalizar).

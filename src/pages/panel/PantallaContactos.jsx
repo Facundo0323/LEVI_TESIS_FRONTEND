@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import Paginador from '../../components/Paginador';
 import { getTutores, getProfesores, eliminarUsuarioPorId } from '../../services/api';
 
 function PantallaContactos() {
@@ -26,26 +27,39 @@ function PantallaContactos() {
     const [cargando, setCargando]   = useState(true);
     const [tutores, setTutores]     = useState([]);
     const [profesores, setProfesores] = useState([]);
+    const [pagina, setPagina]             = useState(1);
+    const [totalPaginas, setTotalPaginas] = useState(1);
 
-    useEffect(() => {
-        const cargar = async () => {
-            setCargando(true);
-            try {
-                if (rol === 'profesor') {
-                    const data = await getTutores();
-                    setTutores(data.tutores || []);
-                } else {
-                    const data = await getProfesores();
-                    setProfesores(data.profesores || []);
-                }
-            } catch (error) { 
-                alert(error.message || 'Error al cargar los contactos.'); 
-            } finally { 
-                setCargando(false); 
+    /**
+     * Carga una página de contactos (tutores si es profesor, profesores si es
+     * tutor). Si esa página ya no existe (por ejemplo, se borró el único
+     * profesor de la última página), carga la última que sí existe.
+     * @param {number} p Página a cargar (por defecto, la actual).
+     */
+    const cargar = async (p = pagina) => {
+        setCargando(true);
+        try {
+            const data  = rol === 'profesor' ? await getTutores(p) : await getProfesores(p);
+            const total = data.totalPaginas || 1;
+
+            if (p > total) {
+                await cargar(total);
+                return;
             }
-        };
-        cargar();
-    }, []);
+
+            if (rol === 'profesor') setTutores(data.tutores || []);
+            else                    setProfesores(data.profesores || []);
+
+            setPagina(p);
+            setTotalPaginas(total);
+        } catch (error) {
+            alert(error.message || 'Error al cargar los contactos.');
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => { cargar(1); }, []);
     // -----------------------------------------------------------------------
     // ELIMINACIÓN DE PROFESORES (solo para tutores)
     // -----------------------------------------------------------------------
@@ -59,7 +73,8 @@ function PantallaContactos() {
             await eliminarUsuarioPorId(profe.idUsuario);
             
             alert('Profesor eliminado correctamente.');
-            setProfesores(prev => prev.filter(p => p.idUsuario !== profe.idUsuario));
+            // Se recarga la página actual para que se complete con el siguiente profesor
+            await cargar();
         } catch (error) { 
             alert(error.message || 'Error al eliminar profesor.'); 
         } finally { 
@@ -106,7 +121,13 @@ function PantallaContactos() {
                         </div>
                     )}
                 </div>
-                <button 
+                <Paginador
+                    pagina={pagina}
+                    totalPaginas={totalPaginas}
+                    onCambiar={cargar}
+                    deshabilitado={cargando}
+                />
+                <button
                     className="btn-volver-bottom" 
                     onClick={() => navigate('/panel')} 
                     disabled={cargando}>
@@ -151,7 +172,14 @@ function PantallaContactos() {
                 )}
             </div>
 
-            <button 
+            <Paginador
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onCambiar={cargar}
+                deshabilitado={cargando}
+            />
+
+            <button
                 className="btn-volver-bottom" 
                 onClick={() => navigate('/panel')} 
                 disabled={cargando}>

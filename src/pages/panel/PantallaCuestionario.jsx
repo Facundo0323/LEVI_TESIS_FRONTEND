@@ -7,9 +7,10 @@
  *   - tutor:    solo puede listar y revisar cuestionarios finalizados.
  */
 
-import { useState, useEffect} from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../panel.css';
+import Paginador from '../../components/Paginador';
 import { 
     getCuestionarios, cambiarEstadoCuestionario, eliminarCuestionarioPorId, 
     getRevisionCuestionario, getCuestionarioCompleto, crearCuestionario, editarCuestionario 
@@ -63,9 +64,56 @@ const formatearFecha = (fechaISO) => {
 };
 
 // -----------------------------------------------------------------------
+// IMPORTACIÓN DESDE ARCHIVO (editor web de GitHub Pages)
+// -----------------------------------------------------------------------
+
+// Debe coincidir con config/Limites.h de la placa y con el editor web
+const MAX_PREGUNTAS = 20;
+const MIN_OPCIONES  = 2;
+const MAX_OPCIONES  = 4;
+
+/**
+ * Convierte el archivo descargado del editor web al estado que usa
+ * EditorCuestionario. Lanza Error si el archivo no es válido.
+ */
+const parsearArchivoCuestionario = (texto) => {
+    let datos;
+    try { datos = JSON.parse(texto); }
+    catch (_) { throw new Error('El archivo no es un JSON válido.'); }
+
+    if (datos.formato !== 'levi-cuestionario') throw new Error('El archivo no es un cuestionario de LEVI.');
+    if (!Array.isArray(datos.preguntas) || datos.preguntas.length === 0) throw new Error('El archivo no tiene preguntas.');
+    if (datos.preguntas.length > MAX_PREGUNTAS) throw new Error(`El archivo tiene más de ${MAX_PREGUNTAS} preguntas.`);
+
+    const preguntas = datos.preguntas.map((p, i) => {
+        const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+        if (opciones.length < MIN_OPCIONES || opciones.length > MAX_OPCIONES)
+            throw new Error(`La pregunta ${i + 1} debe tener entre ${MIN_OPCIONES} y ${MAX_OPCIONES} opciones.`);
+
+        const correctas = opciones.filter(o => o.esCorrecta).length;
+        if (correctas !== 1)
+            throw new Error(`La pregunta ${i + 1} debe tener exactamente una opción correcta.`);
+
+        return {
+            pregunta: String(p.pregunta ?? ''),
+            puntaje: p.puntajeCorrecta ?? 1,
+            puntajeNegativo: p.puntajeIncorrecta ?? 0,
+            correcta: opciones.findIndex(o => o.esCorrecta),
+            opciones: opciones.map(o => String(o.opcion ?? '')),
+        };
+    });
+
+    return {
+        titulo: String(datos.titulo ?? ''),
+        puntajeParaAprobar: datos.puntajeParaAprobar ?? 1,
+        preguntas,
+    };
+};
+
+// -----------------------------------------------------------------------
 // VISTA LISTA DE CUESTIONARIOS
 // -----------------------------------------------------------------------
-function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, onEliminar, onCambiarEstado, onRevisar, onVolver }) {
+function ListaCuestionarios({ cuestionarios, rol, cargando, pagina, totalPaginas, onCambiarPagina, onNuevo, onEditar, onEliminar, onCambiarEstado, onRevisar, onVolver }) {
     return (
         <div className="panel-menu-container">
             <div className="cuestionarios-sub-header">
@@ -129,7 +177,9 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                                 <div className="card-metadata">
                                     <div className="metadata-textos">
                                         <span>Nº preguntas: {cues.cantPreguntas}</span>
-                                        <span>Puntaje: "{cues.puntajeObtenido}" ({cues.aprobado ? 'Aprobado' : 'Desaprobado'})</span>
+                                        {estado === 'FINALIZADO' && (
+                                            <span>Puntaje: "{cues.puntajeObtenido}" ({cues.aprobado ? 'Aprobado' : 'Desaprobado'})</span>
+                                        )}
                                         <span style={{ color: colorEstado }}>{estado.replace('_', ' ')}</span>
                                         {estado !== 'PENDIENTE' && (
                                             <span>Fecha de inicio: {formatearFecha(cues.fechaInicio)}</span>
@@ -177,6 +227,13 @@ function ListaCuestionarios({ cuestionarios, rol, cargando, onNuevo, onEditar, o
                 )}
             </div>
 
+            <Paginador
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onCambiar={onCambiarPagina}
+                deshabilitado={cargando}
+            />
+
             <button className="btn-volver-bottom" onClick={onVolver} disabled={cargando}>
                 Volver
             </button>
@@ -194,6 +251,10 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
     // -----------------------------------------------------------------------
     
     const agregarPregunta = () => {
+        if (preguntas.length >= MAX_PREGUNTAS) {
+            alert(`Un cuestionario puede tener como máximo ${MAX_PREGUNTAS} preguntas.`);
+            return;
+        }
         setPreguntas([...preguntas, { pregunta: '', correcta: 0, puntaje: 1, puntajeNegativo: 0, opciones: ['', '', '', ''] }]);
         setTimeout(() => document.getElementById(`cues-preg-${preguntas.length}`)?.focus(), 100);
     };
@@ -231,6 +292,27 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
         setPreguntas(arr);
     };
 
+    const inputArchivoRef = useRef(null);
+
+    const cargarDesdeArchivo = (e) => {
+        const archivo = e.target.files[0];
+        e.target.value = '';
+        if (!archivo) return;
+
+        const lector = new FileReader();
+        lector.onload = () => {
+            try {
+                const datos = parsearArchivoCuestionario(lector.result);
+                setTituloTest(datos.titulo);
+                setPuntosAprobar(datos.puntajeParaAprobar);
+                setPreguntas(datos.preguntas);
+            } catch (err) {
+                alert(err.message);
+            }
+        };
+        lector.readAsText(archivo);
+    };
+
     // -----------------------------------------------------------------------
     // ELEMENTOS DEL EDITOR
     // -----------------------------------------------------------------------
@@ -253,7 +335,27 @@ function EditorCuestionario({ idEditando, tituloTest, setTituloTest, puntosAprob
                 />
             </div>
 
-            <p className="panel-desc">Escribe tus preguntas. Puedes agregar tantas como desees.</p>
+            <p className="panel-desc">Escribe tus preguntas. Puedes agregar hasta {MAX_PREGUNTAS} preguntas.</p>
+
+            {idEditando === null && (
+                <>
+                    <button
+                        className="btn-gris"
+                        disabled={cargando}
+                        onClick={() => inputArchivoRef.current?.click()}
+                        style={{ marginBottom: '20px', padding: '12px 20px' }}
+                    >
+                        📂 Cargar desde archivo
+                    </button>
+                    <input
+                        ref={inputArchivoRef}
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={cargarDesdeArchivo}
+                        hidden
+                    />
+                </>
+            )}
 
             <div className="contenedor-formularios">
                 {preguntas.map((preg, i) => (
@@ -504,6 +606,8 @@ function PantallaCuestionario() {
     // ESTADOS AUXILIARES
     // -----------------------------------------------------------------------
     const [cuestionarios, setCuestionarios] = useState([]);
+    const [pagina, setPagina]               = useState(1);
+    const [totalPaginas, setTotalPaginas]   = useState(1);
 
     // Editor
     const [idEditando, setIdEditando]           = useState(null);
@@ -518,14 +622,28 @@ function PantallaCuestionario() {
     // -----------------------------------------------------------------------
     // FUNCIONES DE LA VISTA "LISTAR"
     // -----------------------------------------------------------------------
-    useEffect(() => { cargarCuestionarios(); }, []);
+    useEffect(() => { cargarCuestionarios(1); }, []);
 
-    const cargarCuestionarios = async () => {
+    /**
+     * Carga una página de la lista. Si esa página ya no existe (por ejemplo,
+     * se borró el único cuestionario de la última página), carga la última que sí existe.
+     * @param {number} p Página a cargar (por defecto, la actual).
+     */
+    const cargarCuestionarios = async (p = pagina) => {
         setCargando(true);
         try {
-            const data = await getCuestionarios();
+            const data = await getCuestionarios(p);
+            const total = data.totalPaginas || 1;
+
+            if (p > total) {
+                await cargarCuestionarios(total);
+                return;
+            }
+
             setCuestionarios(data.cuestionarios || []);
-        } catch (error) { 
+            setPagina(p);
+            setTotalPaginas(total);
+        } catch (error) {
             alert(error.message || 'Error al cargar cuestionarios.'); 
         } finally { 
             setCargando(false); 
@@ -615,6 +733,10 @@ function PantallaCuestionario() {
     // -----------------------------------------------------------------------
 
     const guardar = async () => {
+        if (preguntas.length > MAX_PREGUNTAS) {
+            return alert(`Un cuestionario puede tener como máximo ${MAX_PREGUNTAS} preguntas (tiene ${preguntas.length}).`);
+        }
+
         const incompleta = preguntas.some(p =>
             !p.pregunta.trim() || p.opciones.length < 2 || p.opciones.some(o => !o.trim())
         );
@@ -638,8 +760,9 @@ function PantallaCuestionario() {
             } else {
                 await crearCuestionario(payload);
             }
-            alert('¡Guardado con éxito!'); 
-            await cargarCuestionarios(); 
+            alert('¡Guardado con éxito!');
+            // Uno nuevo aparece primero (página 1); al editar se queda en la página actual
+            await cargarCuestionarios(idEditando !== null ? pagina : 1);
             setVista('lista');
         } catch (error) { 
             alert(error.message || 'Error al guardar.'); 
@@ -656,6 +779,9 @@ function PantallaCuestionario() {
                 cuestionarios={cuestionarios}
                 rol={rol}
                 cargando={cargando}
+                pagina={pagina}
+                totalPaginas={totalPaginas}
+                onCambiarPagina={cargarCuestionarios}
                 onNuevo={iniciarNuevo}
                 onEditar={abrirEditor}
                 onEliminar={eliminarCuestionario}
